@@ -2,10 +2,12 @@
 from flask import Flask
 from flask import request, jsonify
 import json
-
+from flask_pymongo import PyMongo
 
 app = Flask(__name__)
-
+app.config["MONGO_URI"] = "mongodb://localhost:27017/mydb"
+mongo = PyMongo(app)
+db = mongo.db
 
 @app.route('/', methods=['GET'])
 def home():
@@ -14,7 +16,11 @@ def home():
 
 @app.route('/test', methods=['GET'])
 def test():
-    return 'tested'
+    users = db.users.find()
+    output = []
+    for s in users:
+        output.append({'name' : s['name'], 'email' : s['email']})
+    return jsonify({'result' : output})
 
 
 if __name__ == '__main__':
