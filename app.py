@@ -1,28 +1,24 @@
 #!flask/bin/python
-from flask import Flask
-from flask import request, jsonify
-import json
-from flask_pymongo import PyMongo
+from flask import Flask,request,jsonify
+from flask_restful import Api
+from mongoengine import connect
 
+from resources.user import UserResource
+
+# TODO:move this
+SECRET_KEY = "MaVericK"
+
+connect("onx-api-db")
 app = Flask(__name__)
-app.config["MONGO_URI"] = "mongodb://localhost:27017/mydb"
-mongo = PyMongo(app)
-db = mongo.db
-
-@app.route('/', methods=['GET'])
-def home():
-    return 'hello'
+app.config['PROPAGATE_EXCEPTIONS'] = True
+app.secret_key = SECRET_KEY
+api = Api(app)
+# app.config.from_pyfile('the-config.cfg')
+app.config['MONGODB_DB'] = 'onx-api-db'
 
 
-@app.route('/test', methods=['GET'])
-def test():
-    users = db.users.find()
-    output = []
-    for s in users:
-        output.append({'name' : s['name'], 'email' : s['email']})
-    return jsonify({'result' : output})
 
+api.add_resource(UserResource, '/user')
 
 if __name__ == '__main__':
     app.run(debug=True)
-
