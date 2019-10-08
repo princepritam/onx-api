@@ -1,27 +1,26 @@
 #!flask/bin/python
 from flask import Flask
 from flask import request, jsonify
-import json
 from flask_pymongo import PyMongo
+
+from models.user import User
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb://localhost:27017/mydb"
 mongo = PyMongo(app)
 db = mongo.db
 
-@app.route('/', methods=['GET'])
+@app.route('/')
 def home():
     return 'hello'
 
 
-@app.route('/test', methods=['GET'])
+@app.route('/test', methods=['POST'])
 def test():
-    users = db.users.find()
-    output = []
-    for s in users:
-        output.append({'name' : s['name'], 'email' : s['email']})
-    return jsonify({'result' : output})
-
+    request_data = request.get_json()
+    user = User(**request_data)
+    db.users.insert_one(user.asdict())
+    return jsonify(user.asdict())
 
 if __name__ == '__main__':
     app.run(debug=True,port=300)
