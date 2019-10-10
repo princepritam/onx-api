@@ -21,9 +21,9 @@ from models.user import User
 
 # Configuration
 GOOGLE_CLIENT_ID = os.environ.get(
-    "GOOGLE_CLIENT_ID", None)
+    "GOOGLE_CLIENT_ID", '314063582652-788b35ae80evh9cbpua9k91r7ctn8beb.apps.googleusercontent.com')
 GOOGLE_CLIENT_SECRET = os.environ.get(
-    "GOOGLE_CLIENT_SECRET", None)
+    "GOOGLE_CLIENT_SECRET", '2ZPizwcbeBrWjt9KbLNVFxeV')
 GOOGLE_DISCOVERY_URL = (
     "https://accounts.google.com/.well-known/openid-configuration"
 )
@@ -139,4 +139,4 @@ def get_google_provider_cfg():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=300, ssl_context="adhoc")
+    app.run(debug=True, port=3000, ssl_context="adhoc")
