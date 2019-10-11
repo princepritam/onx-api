@@ -56,6 +56,34 @@ def updateSession():
     else:
         return 'error'
 
+@app.route('/sendMessage', methods=['POST'])
+def sendMessage():
+    params = request.get_json()
+
+    doc_id = db.messages.insert({
+        "sessionId": params['sessionId'],
+        "senderId": params['senderId'],
+        "message": params['message'],
+        "timeStamp": params['timeStamp'],
+    })
+    return str(doc_id)
+
+@app.route('/fetchMessages', methods=['POST'])
+def fetchMessages():
+    params = request.get_json()
+
+    messages = db.messages.find({
+        "sessionId": params['sessionId']
+    })
+    output = []
+    for msg in messages:
+        output.append({
+            'message': msg['message'],
+            'senderId': msg['senderId'],
+            'timeStamp': msg['timeStamp'],
+        })
+    return jsonify({'result' : output})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
