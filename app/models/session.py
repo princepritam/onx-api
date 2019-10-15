@@ -1,8 +1,10 @@
 from pymongo.write_concern import WriteConcern
 from pymodm import MongoModel, fields
+from app.models import User
 
 class Session(MongoModel):
-    pass
+    mentor = fields.ReferenceField(User, mongo_name='mentor')
+    student = fields.ReferenceField(User, mongo_name='mentor')
 
     class Meta:
         write_concern = WriteConcern(j=True)
