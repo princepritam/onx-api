@@ -6,7 +6,6 @@ from db import db
 from flask import Flask, redirect, url_for, request, jsonify
 from bson.json_util import dumps
 from pymodm.connection import connect
-from pymodm.errors import ValidationError
 from pymongo.errors import DuplicateKeyError
 # Connect to MongoDB and call the connection "onx".
 connect("mongodb://localhost:27017/onx", alias="onx-app")
@@ -39,27 +38,35 @@ def get_all_users():
 @app.route("/user/update/<string:email>", methods=['PATCH'])
 def update_user(email):
     update_params = {}
-    valid_params = ['name', 'mobileNo', 'role']
+    valid_params = ['name', 'mobileNo', 'role', 'email']
     for key, value in request.get_json().items():
         if key in valid_params:
             update_params[key] = value
     try:
+        User.objects.get({'email':email})
         user = User.from_document(update_params)
-        user.clean_fields(exclude=['email'])
+        user.full_clean(exclude=None)
         update_params['updated_at'] = datetime.datetime.now()
-        User.objects.raw({'_id':email}).update({'$set': update_params})
-        # code.interact(local=dict(globals(), **locals()))
+        User.objects.raw({'email':email}).update({'$set': update_params})
     except (User.DoesNotExist, ValidationError) as e:
+        # code.interact(local=dict(globals(), **locals()))
         return jsonify({'Error': str(e), 'error_status': True})
     return jsonify({'Message': 'User updated successfully.', 'error_status': False})
 
 @app.route("/user/delete/<string:email>", methods=['DELETE'])
 def delete_user(email):
     try:
-        User.objects.get({'_id':email}).delete()
+        User.objects.get({'email':email}).delete()
     except User.DoesNotExist:
         return jsonify({'Error': 'User does not exists.', 'error_status': True})
     return jsonify({'Message': 'User deleted from database.', 'error_status': False})
+
+#CRUD for Session
+@app.route("/session/create", methods=['POST'])
+def create_session():
+    params = request.get_json()
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=3000, ssl_context="adhoc")
