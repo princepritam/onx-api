@@ -78,7 +78,7 @@ def delete_user(id):
         return jsonify({'Error': message, 'error_status': True})
     return jsonify({'Message': 'User deleted from database.', 'error_status': False})
 
-#CRUD for Session
+#CRUD for Sessions
 @app.route("/session/create", methods=['POST'])
 def create_session():
     create_params = request.get_json()
