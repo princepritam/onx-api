@@ -11,7 +11,7 @@ deploy="mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
 # deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
 local="mongodb://localhost:27017/onx"
 
-connect(deploy, alias="onx-app")
+connect(deploy, alias="onx-app", retryWrites=False)
 
 # from api.user_controller import *
 from app.models.models import *
