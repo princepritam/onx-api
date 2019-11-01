@@ -15,6 +15,10 @@ from app.models.models import *
 
 app = Flask(__name__)
 
+@app.route("/", methods=['GET'])
+def home():
+    return 'hello'
+
 #CRUD operations on User
 
 @app.route("/user/create", methods=['POST'])
@@ -123,4 +127,4 @@ def update_session(id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=3000, ssl_context="adhoc")
+    app.run(debug=True, port=3000)
