@@ -85,16 +85,16 @@ def create_session():
     try:
         mentor = User.objects.get({'_id': ObjectId(create_params['mentor_id'])})
         if create_params['type'] == "single":
-            members = User.objects.get({'_id': ObjectId(create_params['members'][0])})
+            members = [str(User.objects.get({'_id': ObjectId(create_params['members'][0])})._id)]
         else:
             members= []
             for user_id in create_params['members']:
                 user = User.objects.get({"_id": ObjectId(user_id)})
-                members.append(user)
+                members.append(str(user._id))
         session = Session(type_=create_params['type'], mentor=mentor, members=members, created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
         session.save(force_insert=True)
     except(User.DoesNotExist, ValidationError) as e:
-        code.interact(local=dict(globals(), **locals()))
+        # code.interact(local=dict(globals(), **locals()))
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'Error': message, 'error_status': True})
     return jsonify({'Message': 'Successfully created session.','error_status': False})
