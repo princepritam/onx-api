@@ -8,7 +8,7 @@ from pymodm.connection import connect
 from pymongo.errors import DuplicateKeyError
 
 
-connect("mongodb://localhost:27017/onx", alias="onx-app")
+connect("mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40", alias="onx-app")
 
 # from api.user_controller import *
 from app.models.models import *
