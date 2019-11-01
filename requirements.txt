@@ -18,7 +18,7 @@ Flask-Login==0.4.1
 Flask-MySQL==1.4.0
 Flask-PyMongo==2.3.0
 Flask-SocketIO==4.2.1
-futures==3.2.0
+futures
 google-api-core==1.14.2
 google-api-python-client==1.7.11
 google-auth==1.6.3
