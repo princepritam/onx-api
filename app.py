@@ -5,18 +5,18 @@ import json
 # from flask_pymongo import PyMongo
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+from flask_socketio import SocketIO, send, emit
 
 app = Flask(__name__)
+# app.config['SECRET_KEY'] = 'secret!'
+app.debug = True
+socketio = SocketIO(app, cors_allowed_origins="*")
 client = MongoClient()
 db = client.mydb
 
 # app.config["MONGO_URI"] = "mongodb://localhost:27017/mydb"
 # mongo = PyMongo(app)
 # db = mongo.db
-
-@app.route('/', methods=['GET'])
-def home():
-    return 'hello'
 
 
 @app.route('/test', methods=['GET'])
@@ -84,7 +84,27 @@ def fetchMessages():
         })
     return jsonify({'result' : output})
 
+@app.route('/', methods=['GET'])
+def home():
+    # send('channel2', 'MSg from server')
+    # send('helloo from server')
+    return 'hello'
+
+@socketio.on('message')
+def handle_message(msg):
+    print('msg recieved' + msg)
+    # send('msg recieved' + msg)
+
+@socketio.on('qqq')
+def onTest(message):
+    print('received message on qqq: ' + message)
+
+@socketio.on('connect')
+def test_connect():
+    print("client connected")
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(debug=True)
+    socketio.run(app)
 
