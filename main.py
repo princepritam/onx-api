@@ -7,8 +7,11 @@ from bson import ObjectId, errors
 from pymodm.connection import connect
 from pymongo.errors import DuplicateKeyError
 
+deploy="mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
+# deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
+local="mongodb://localhost:27017/onx"
 
-connect("mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40", alias="onx-app")
+connect(deploy, alias="onx-app")
 
 # from api.user_controller import *
 from app.models.models import *
@@ -126,4 +129,4 @@ def update_session(id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
