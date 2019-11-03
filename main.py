@@ -23,7 +23,6 @@ def home():
 
 
 
-
 # APIs for User
 @app.route("/user/create", methods=['POST'])
 def create_user():

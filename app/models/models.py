@@ -100,7 +100,9 @@ class Message(MongoModel):
         valid_sender_list.append(str(self.session.mentor._id))
         # code.interact(local=dict(globals(), **locals()))
         if self.sender :
-            if str(self.sender._id) not in valid_sender_list:
+            if (str(self.sender._id) in valid_sender_list) or self.sender.role == "admin":
+                pass
+            else:
                 raise ValidationError("The sender is not a part of the given session.")
         else:
             raise ValidationError("Given Sender ID does not exists.")
