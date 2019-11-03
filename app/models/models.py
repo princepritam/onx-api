@@ -47,8 +47,8 @@ def validate_users(user_ids):
         for id_ in user_ids:
             user = User.objects.get({"_id" : ObjectId(id_)})
             validate_student(user)
-    except Exception:
-        raise ValidationError("User/Users does not exits.")
+    except Exception as e:
+        raise ValidationError(str(e))
                 
 
 class Session(MongoModel):
@@ -72,7 +72,6 @@ class Session(MongoModel):
         self.validate_type()
 
     def validate_type(self):
-        # code.interact(local=dict(globals(), **locals()))
         if self.type_ == 'multiple' and len(self.members) < 2:
             raise ValidationError("Atleast two members are required to start a multiple session.")
         if self.type_ == 'single' and len(self.members) > 1:
@@ -81,8 +80,8 @@ class Session(MongoModel):
 
 # message model
 class Message(MongoModel):
-    session_id = fields.ReferenceField(Session, required=True, mongo_name="session_id")
-    sender_id = fields.ReferenceField(User, required=True, mongo_name="sender_id")
+    session = fields.ReferenceField(Session, required=True, mongo_name="session")
+    sender = fields.ReferenceField(User, required=True, mongo_name="sender")
     content = fields.CharField(required=True, mongo_name="content")
     type_ = fields.CharField(required=True, mongo_name="type",choices=['text', 'image'] )
     created_at = fields.DateTimeField(required=True, mongo_name="created_at")
@@ -93,14 +92,21 @@ class Message(MongoModel):
         connection_alias = 'onx-app'
     
     def clean(self):
-        self.validate_sender()
-        self.validate_session()
+        self.is_session_valid()
+        self.is_sender_valid()
 
-    def validate_sender(self):
-        if not self.sender_id :
+    def is_sender_valid(self):
+        valid_sender_list = self.session.members
+        valid_sender_list.append(str(self.session.mentor._id))
+        # code.interact(local=dict(globals(), **locals()))
+        if self.sender :
+            if str(self.sender._id) not in valid_sender_list:
+                raise ValidationError("The sender is not a part of the given session.")
+        else:
             raise ValidationError("Given Sender ID does not exists.")
 
-    def validate_session(self):
-        if not self.session_id :
+    def is_session_valid(self):
+        if not self.session :
             raise ValidationError("Given Session ID does not exists.")
+        return True
 

@@ -104,7 +104,7 @@ def create_session():
 def get_all_Sessions():
     sessions_list = []
     for session in Session.objects.all():
-        sessions_list.append({'id': str(session._id), 'type': session.type_, 'mentor': session.mentor.email, 'members': session.members, 'start_time':
+        sessions_list.append({'id': str(session._id), 'type': session.type_, 'mentor': str(session.mentor._id), 'members': session.members, 'start_time':
                     session.start_time, 'status': session.status, 'duration': session.duration, 'end_time': session.end_time,
                     'feedback': session.feedback, 'created_at': session.created_at, 'updated_at': session.updated_at})
     return jsonify(sessions_list)
@@ -130,7 +130,7 @@ def create_message():
     try:
         create_params = request.get_json()
         create_params['created_at'] = datetime.datetime.now()
-        message = Message(session_id=create_params['session_id'], sender_id=create_params['sender_id'],
+        message = Message(session=create_params['session_id'], sender=create_params['sender_id'],
                         content=create_params['content'], type_=create_params['type_'], created_at=create_params['created_at'])
         message.save()
     except Exception as e:
@@ -143,12 +143,11 @@ def get_messages(session_id):
         session_id = ObjectId(session_id)
         session = Session.objects.get({'_id': session_id})
         result = []
-        messages = Message.objects.raw({'session_id': session_id})
+        messages = Message.objects.raw({'session': session_id})
         for message in messages:
-            user = message.sender_id
-            # code.interact(local=dict(globals(), **locals()))
+            user = message.sender
             sender_details = {"id": str(user._id), "name": user.name, "email": user.email, "role": user.role}
-            result.append({"id": str(message._id), "session_id": str(message.session_id._id), "sender": sender_details,
+            result.append({"id": str(message._id), "session_id": str(message.session._id), "sender": sender_details,
             "content": message.content, "type": message.type_, "created_at":message.created_at})
     except Exception as e:
         message = 'Session does not exists.' if str(e) == '' else str(e)
