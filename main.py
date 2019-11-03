@@ -64,7 +64,7 @@ def update_user(id):
         for key, value in request.get_json().items():
             if key in valid_params:
                 update_params[key] = value
-        user = User.objects.get({'_id':id})
+        user = User.objects.raw({'_id':id})
         user_valid = User.from_document(update_params) #validate update params
         user_valid.full_clean(exclude=None) #validate update params and raise exception if any
         update_params['updated_at'] = datetime.datetime.now()
