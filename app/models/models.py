@@ -57,7 +57,7 @@ class Session(MongoModel):
     members = fields.ListField(mongo_name='members', validators=[validate_users])
     status = fields.CharField(choices=('active', 'inactive', 'ended'), mongo_name='status', default='inactive')
     start_time = fields.DateTimeField(required=False, mongo_name='start_time')
-    duration = fields.TimestampField(mongo_name='duration')
+    duration = fields.CharField(mongo_name='duration')
     end_time = fields.DateTimeField(mongo_name='end_time')
     feedback = fields.CharField(max_length=1000, mongo_name='feed_back')
     created_at = fields.DateTimeField(required=True, mongo_name='created_at')
