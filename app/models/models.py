@@ -117,3 +117,13 @@ class Message(MongoModel):
             raise ValidationError("Given Session ID does not exists.")
         return True
 
+class CorporateGroup(MongoModel):
+    title = fields.CharField(required=True, mongo_name='title')
+    code = fields.CharField(required=True, mongo_name='code', max_length=5, min_length=5)
+
+    class Meta:
+        write_concern = WriteConcern(j=True)
+        ignore_unknown_fields = True
+        connection_alias = 'onx-app'
+
+
