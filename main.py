@@ -38,7 +38,7 @@ def create_user():
         return jsonify({'error': str(e), 'error_status': True}), 422
     return jsonify({'message': 'Successfully created user.','user_id': str(user._id), 'error_status': False}), 201
 
-@app.route("/users", methods=['GET','POST'])
+@app.route("/users", methods=['POST'])
 def get_all_users():
     users_list = []
     for user in User.objects.all():
@@ -46,7 +46,7 @@ def get_all_users():
                                 'mobile_no':user.mobile_no, 'role':user.role, 'photo_url':user.photo_url, 'created_at':user.created_at, 'updated_at':user.updated_at})
     return jsonify(users_list), 200
 
-@app.route("/user", methods=['GET'])
+@app.route("/user", methods=['POST'])
 def show_user():
     try:
         user_id = ObjectId(request.get_json()['user_id'])
@@ -103,7 +103,7 @@ def create_session():
         return jsonify({'error': message, 'error_status': True}), 422
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
 
-@app.route("/sessions", methods=['GET'])
+@app.route("/sessions", methods=['POST'])
 def get_all_sessions():
     try:
         user_id = request.get_json()['user_id']
@@ -122,7 +122,7 @@ def get_all_sessions():
         return jsonify({'error': message, 'error_status': True}), 404
     return jsonify({'sessions': sessions_list, 'error_status': False}), 200 
 
-@app.route("/session", methods=['GET'])
+@app.route("/session", methods=['POST'])
 def show_session():
     try:
         session_id = ObjectId(request.get_json()['session_id'])
@@ -177,7 +177,7 @@ def create_message():
         return jsonify({"error": str(e), 'error_status': True}), 422
     return jsonify({'message': 'Successfully created a message.','error_status': False}), 201
 
-@app.route("/messages", methods=['GET'])
+@app.route("/messages", methods=['POST'])
 def get_messages():
     try:
         session_id = ObjectId(request.get_json()['session_id'])
