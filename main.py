@@ -76,7 +76,7 @@ def update_user():
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 422
-    return jsonify({'message': 'User updated successfully.', 'error_status': False}), 204
+    return jsonify({'message': 'User updated successfully.', 'error_status': False}), 202
 
 @app.route("/user/delete", methods=['DELETE'])
 def delete_user():
@@ -159,7 +159,7 @@ def update_session(action=None):
     except Exception as e :
         message = 'Session does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 422
-    return jsonify({'message': 'Successfully updated session.','error_status': False}), 204
+    return jsonify({'message': 'Successfully updated session.','error_status': False}), 202
 
 
 
