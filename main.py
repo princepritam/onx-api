@@ -32,6 +32,8 @@ def create_user():
                      created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), photo_url=params['photo_url'])
         user.save(force_insert=True)
     except Exception as e:
+        if str(e) == 'User with this email already exist':
+            return jsonify({'message': str(e), 'error_status': False, 'previously_logged_in': True})
         return jsonify({'error': str(e), 'error_status': True})
     return jsonify({'message': 'Successfully created user.','user_id': str(user._id), 'error_status': False})
 
