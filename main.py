@@ -11,7 +11,7 @@ deploy="mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
 # deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
 local="mongodb://localhost:27017/onx"
 
-connect(deploy, alias="onx-app", retryWrites=False)
+connect(local, alias="onx-app", retryWrites=False)
 
 from app.models.models import *
 
@@ -28,19 +28,19 @@ def home():
 def create_user():
     params = request.get_json()
     try:
-        user = User(email=params['email'], name=params['name'], mobileNo=params['mobileNo'],
-                    role=params['role'], created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+        user = User(email=params['email'], name=params['name'], mobile_no=params['mobile_no'],
+                    role=params['role'], created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), photo=params['photo_url'])
         user.save(force_insert=True)
     except Exception as e:
-        return jsonify({'Error': str(e), 'error_status': True})
-    return jsonify({'Message': 'Successfully created user.','user_id': str(user._id), 'error_status': False})
+        return jsonify({'error': str(e), 'errorStatus': True})
+    return jsonify({'message': 'Successfully created user.','userId': str(user._id), 'errorStatus': False})
 
 @app.route("/users", methods=['GET','POST'])
 def get_all_users():
     users_list = []
     for user in User.objects.all():
         users_list.append({'id': str(user._id), 'name':user.name, 'email':user.email, 
-                                'mobileNo':user.mobileNo, 'role':user.role, 'created_at':user.created_at, 'updated_at':user.updated_at})
+                                'mobileNo':user.mobile_no, 'role':user.role, 'created_at':user.created_at, 'updated_at':user.updated_at})
     return jsonify(users_list)
 
 @app.route("/user", methods=['GET'])
@@ -49,10 +49,10 @@ def show_user():
         user_id = ObjectId(request.get_json()['user_id'])
         user = User.objects.get({'_id': user_id})
         return jsonify([{'id': str(user._id), 'name':user.name, 'email':user.email, 
-                        'mobileNo':user.mobileNo, 'role':user.role, 'created_at':user.created_at, 'updated_at':user.updated_at}])
+                        'mobileNo':user.mobile_no, 'role':user.role, 'created_at':user.created_at, 'updated_at':user.updated_at}])
     except Exception as e :
         message = 'User does not exists.' if str(e) == '' else str(e)
-        return jsonify({'Error': message, 'error_status': True})
+        return jsonify({'error': message, 'errorStatus': True})
 
 
 @app.route("/user/update", methods=['PATCH'])
@@ -61,7 +61,7 @@ def update_user():
         user_id = ObjectId(request.get_json()['user_id'])
         User.objects.get({'_id': user_id}) #validates if given user id is valid.
         update_params = {}
-        valid_params = ['name', 'mobileNo', 'role']
+        valid_params = ['name', 'mobile_no', 'role', 'photo', 'preferences']
         for key, value in request.get_json().items():
             if key in valid_params:
                 update_params[key] = value
@@ -72,8 +72,8 @@ def update_user():
         user.update({'$set': update_params})
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
-        return jsonify({'Error': message, 'error_status': True})
-    return jsonify({'Message': 'User updated successfully.', 'error_status': False})
+        return jsonify({'error': message, 'errorStatus': True})
+    return jsonify({'message': 'User updated successfully.', 'errorStatus': False})
 
 @app.route("/user/delete", methods=['DELETE'])
 def delete_user():
@@ -82,8 +82,8 @@ def delete_user():
         User.objects.get({'_id': user_id}).delete()
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
-        return jsonify({'Error': message, 'error_status': True})
-    return jsonify({'Message': 'User deleted from database.', 'error_status': False})
+        return jsonify({'error': message, 'errorStatus': True})
+    return jsonify({'message': 'User deleted from database.', 'errorStatus': False})
 
 
 
@@ -97,8 +97,8 @@ def create_session():
         session.save(force_insert=True)
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
-        return jsonify({'Error': message, 'error_status': True})
-    return jsonify({'Message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False})
+        return jsonify({'error': message, 'errorStatus': True})
+    return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'errorStatus': False})
 
 @app.route("/sessions", methods=['GET'])
 def get_all_sessions():
@@ -120,7 +120,7 @@ def show_session():
         return jsonify(result)
     except Exception as e:
         message = 'Session does not exists.' if str(e) == '' else str(e)
-        return jsonify({'Error': message, 'error_status': True})
+        return jsonify({'error': message, 'errorStatus': True})
 
 @app.route("/session/update", methods=['PATCH'])
 @app.route("/session/update/<string:action>", methods=['PATCH'])
@@ -145,8 +145,8 @@ def update_session(action=None):
             raise ValidationError("Presently the session is " + session_.status)
     except Exception as e :
         message = 'Session does not exists.' if str(e) == '' else str(e)
-        return jsonify({'Error': message, 'error_status': True})
-    return jsonify({'Message': 'Successfully updated session.','error_status': False})
+        return jsonify({'error': message, 'errorStatus': True})
+    return jsonify({'message': 'Successfully updated session.','errorStatus': False})
 
 
 
@@ -161,8 +161,8 @@ def create_message():
                         content=create_params['content'], type_=create_params['type_'], created_at=create_params['created_at'])
         message.save()
     except Exception as e:
-        return jsonify({"Error": str(e), 'error_status': True})
-    return jsonify({'Message': 'Successfully created a message.','error_status': False})
+        return jsonify({"error": str(e), 'errorStatus': True})
+    return jsonify({'message': 'Successfully created a message.','errorStatus': False})
 
 @app.route("/messages", methods=['GET'])
 def get_messages():
@@ -178,10 +178,10 @@ def get_messages():
             "content": message.content, "type": message.type_, "created_at":message.created_at})
     except Exception as e:
         message = 'Session does not exists.' if str(e) == '' else str(e)
-        return jsonify({'Error': message, 'error_status': True})
-    return jsonify({'Messages': result, 'error_status': False})
+        return jsonify({'error': message, 'errorStatus': True})
+    return jsonify({'messages': result, 'errorStatus': False})
 
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=3000, host='localhost', debug=True)

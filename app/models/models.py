@@ -8,8 +8,10 @@ import code
 class User(MongoModel):
     email = fields.EmailField(required=False, mongo_name='email')
     name = fields.CharField(required=False, mongo_name='name')
-    mobileNo = fields.CharField(min_length=10, max_length=10, required=False, mongo_name='mobileNo')
+    mobile_no = fields.CharField(min_length=10, max_length=10, required=False, mongo_name='mobile_no')
     role = fields.CharField(choices=('mentor', 'student', 'admin'), required=False, mongo_name='role')
+    photo = fields.CharField(mongo_name='photo')
+    preferences = fields.ListField(mongo_name='preferences')
     created_at = fields.DateTimeField(mongo_name='created_at')
     updated_at = fields.DateTimeField(mongo_name='updated_at')
 
@@ -48,7 +50,8 @@ def validate_users(user_ids):
             user = User.objects.get({"_id" : ObjectId(id_)})
             validate_student(user)
     except Exception as e:
-        raise ValidationError(str(e))
+        message = "User does not exists." if str(e) == "" else str(e)
+        raise ValidationError(message)
                 
 
 class Session(MongoModel):
