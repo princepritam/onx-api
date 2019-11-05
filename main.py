@@ -28,8 +28,8 @@ def home():
 def create_user():
     params = request.get_json()
     try:
-        user = User(email=params['email'], name=params['name'], mobile_no=params['mobile_no'],
-                    role=params['role'], created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), photo=params['photo_url'])
+        user = User(email=params['email'], name=params['name'], mobile_no=params['mobileNno'],
+                    role=params['role'], user_token=params['userToken'], created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), photo=params['photo_url'])
         user.save(force_insert=True)
     except Exception as e:
         return jsonify({'error': str(e), 'errorStatus': True})
@@ -49,7 +49,7 @@ def show_user():
         user_id = ObjectId(request.get_json()['user_id'])
         user = User.objects.get({'_id': user_id})
         return jsonify([{'id': str(user._id), 'name':user.name, 'email':user.email, 
-                        'mobileNo':user.mobile_no, 'role':user.role, 'created_at':user.created_at, 'updated_at':user.updated_at}])
+                        'mobileNo':user.mobile_no, 'role':user.role, 'created_at':user.created_at, 'updated_at':user.updated_at, 'userToken':user.user_token}])
     except Exception as e :
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'errorStatus': True})
