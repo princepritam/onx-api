@@ -12,6 +12,7 @@ class User(MongoModel):
     role = fields.CharField(choices=('mentor', 'student', 'admin'), required=False, mongo_name='role')
     photo_url= fields.CharField(mongo_name='photo_url')
     user_token = fields.CharField(mongo_name='user_token')
+    user_group = fields.CharField(mongo_name='user_group')
     preferences = fields.ListField(mongo_name='preferences')
     created_at = fields.DateTimeField(mongo_name='created_at')
     updated_at = fields.DateTimeField(mongo_name='updated_at')

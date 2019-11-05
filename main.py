@@ -63,7 +63,7 @@ def update_user():
         user_id = ObjectId(request.get_json()['user_id'])
         User.objects.get({'_id': user_id}) #validates if given user id is valid.
         update_params = {}
-        valid_params = ['name', 'mobile_no', 'role', 'photo_url', 'preferences']
+        valid_params = ['name', 'mobile_no', 'role', 'photo_url', 'preferences', 'user_group']
         for key, value in request.get_json().items():
             if key in valid_params:
                 update_params[key] = value
