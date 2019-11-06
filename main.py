@@ -114,7 +114,9 @@ def get_all_sessions():
             session_users.append(str(session.mentor._id))
             # code.interact(local=dict(globals(), **locals()))
             if user_id in session_users:
-                sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': str(session.mentor._id), 'members': session.members, 'start_time':
+                mentor = session.mentor
+                mentor_details = {'name': mentor.name, 'user_id': mentor._id, 'email': mentor.email, 'photo_url': mentor.photo_url}
+                sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
                             session.start_time, 'status': session.status, 'duration': session.duration, 'end_time': session.end_time,
                             'feedback': session.feedback, 'created_at': session.created_at, 'updated_at': session.updated_at})
     except Exception as e:
