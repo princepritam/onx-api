@@ -127,7 +127,9 @@ def show_session():
     try:
         session_id = ObjectId(request.get_json()['session_id'])
         session = Session.objects.get({"_id": session_id})
-        result = {'Session': {'session_id': str(session._id), 'type': session.type_, 'mentor': str(session.mentor._id), 'members': session.members, 'start_time':
+        mentor = session.mentor
+        mentor_details = {'name': mentor.name, 'user_id': mentor._id, 'email': mentor.email, 'photo_url': mentor.photo_url}
+        result = {'Session': {'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
                     session.start_time, 'status': session.status, 'duration': session.duration, 'end_time': session.end_time,
                     'feedback': session.feedback, 'created_at': session.created_at, 'updated_at': session.updated_at}}
         return jsonify(result), 200
