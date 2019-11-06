@@ -115,7 +115,7 @@ def get_all_sessions():
             # code.interact(local=dict(globals(), **locals()))
             if user_id in session_users:
                 mentor = session.mentor
-                mentor_details = {'name': mentor.name, 'user_id': mentor._id, 'email': mentor.email, 'photo_url': mentor.photo_url}
+                mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
                 sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
                             session.start_time, 'status': session.status, 'duration': session.duration, 'end_time': session.end_time,
                             'feedback': session.feedback, 'created_at': session.created_at, 'updated_at': session.updated_at})
@@ -130,7 +130,7 @@ def show_session():
         session_id = ObjectId(request.get_json()['session_id'])
         session = Session.objects.get({"_id": session_id})
         mentor = session.mentor
-        mentor_details = {'name': mentor.name, 'user_id': mentor._id, 'email': mentor.email, 'photo_url': mentor.photo_url}
+        mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
         result = {'Session': {'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
                     session.start_time, 'status': session.status, 'duration': session.duration, 'end_time': session.end_time,
                     'feedback': session.feedback, 'created_at': session.created_at, 'updated_at': session.updated_at}}
