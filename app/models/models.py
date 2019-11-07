@@ -13,7 +13,7 @@ class User(MongoModel):
     photo_url= fields.CharField(mongo_name='photo_url')
     user_token = fields.CharField(mongo_name='user_token')
     user_group = fields.CharField(mongo_name='user_group', choices=['UNX12'])
-    nick_name = fields.CharField(mongo_name='nick_name')
+    nickname = fields.CharField(mongo_name='nickname')
     preferences = fields.ListField(mongo_name='preferences')
     created_at = fields.DateTimeField(mongo_name='created_at')
     updated_at = fields.DateTimeField(mongo_name='updated_at')
