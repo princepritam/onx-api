@@ -43,7 +43,7 @@ def get_all_users():
     users_list = []
     for user in User.objects.all():
         users_list.append({'user_id': str(user._id), 'name':user.name, 'email':user.email, 
-                                'mobile_no':user.mobile_no, 'role':user.role, 'photo_url':user.photo_url, 'created_at':user.created_at, 'updated_at':user.updated_at})
+                                'mobile_no':user.mobile_no, 'role':user.role, 'user_group':user.user_group, 'photo_url':user.photo_url, 'created_at':user.created_at, 'updated_at':user.updated_at})
     return jsonify(users_list), 200
 
 @app.route("/user", methods=['POST'])
@@ -95,30 +95,68 @@ def delete_user():
 def create_session():
     create_params = request.get_json()
     try:
-        mentor = User.objects.get({'_id': ObjectId(create_params['mentor_id'])})
-        session = Session(type_=create_params['type'], mentor=mentor, members=create_params['members'], created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+        session = Session(type_=create_params['type'], members=create_params['members'], category=create_params['category'], created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
         session.save(force_insert=True)
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 422
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
 
-@app.route("/sessions", methods=['POST'])
-def get_all_sessions():
+@app.route("/sessions/user", methods=['POST'])
+def get_student_sessions():
     try:
         user_id = request.get_json()['user_id']
         User.objects.get({'_id':ObjectId(user_id)})
         sessions_list = []
         for session in Session.objects.all():
             session_users = session.members.copy()
-            session_users.append(str(session.mentor._id))
             # code.interact(local=dict(globals(), **locals()))
-            if user_id in session_users:
+            if (user_id in session_users) and (session.status in ["active", "ended"]) :
                 mentor = session.mentor
                 mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
                 sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
                             session.start_time, 'status': session.status, 'duration': session.duration, 'end_time': session.end_time,
-                            'feedback': session.feedback, 'created_at': session.created_at, 'updated_at': session.updated_at})
+                            'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
+    except Exception as e:
+        message = 'User does not exists.' if str(e) == '' else str(e)
+        return jsonify({'error': message, 'error_status': True}), 404
+    return jsonify({'sessions': sessions_list, 'error_status': False}), 200 
+
+@app.route("/sessions/mentor", methods=['POST'])
+def get_mentor_sessions():
+    try:
+        user_id = request.get_json()['user_id']
+        User.objects.get({'_id':ObjectId(user_id)})
+        sessions_list = []
+        for session in Session.objects.all():
+            # code.interact(local=dict(globals(), **locals()))
+            if (user_id == str(session.mentor._id)) and (session.status in ["active", "ended"] ):
+                mentor = session.mentor
+                mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
+                sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
+                            session.start_time, 'status': session.status, 'duration': session.duration, 'end_time': session.end_time,
+                            'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
+    except Exception as e:
+        message = 'User does not exists.' if str(e) == '' else str(e)
+        return jsonify({'error': message, 'error_status': True}), 404
+    return jsonify({'sessions': sessions_list, 'error_status': False}), 200 
+
+@app.route("/sessions/mentor/requests", methods=['POST'])
+def get_requested_sessions():
+    try:
+        user_id = request.get_json()['user_id']
+        mentor = User.objects.get({'_id':ObjectId(user_id)})
+        preferences = mentor.preferences.copy()
+        preferences.append('others')
+        sessions_list = []
+        for session in Session.objects.all():
+            # code.interact(local=dict(globals(), **locals()))
+            if (user_id == str(session.mentor._id)) and (session.status in ["active", "ended"]) and (session.category in preferences ):
+                mentor = session.mentor
+                mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
+                sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
+                            session.start_time, 'status': session.status, 'duration': session.duration, 'end_time': session.end_time,
+                            'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
@@ -133,7 +171,7 @@ def show_session():
         mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
         result = {'Session': {'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
                     session.start_time, 'status': session.status, 'duration': session.duration, 'end_time': session.end_time,
-                    'feedback': session.feedback, 'created_at': session.created_at, 'updated_at': session.updated_at}}
+                    'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at}}
         return jsonify(result), 200
     except Exception as e:
         message = 'Session does not exists.' if str(e) == '' else str(e)
@@ -148,7 +186,8 @@ def update_session(action=None):
         session_ = Session.objects.get({'_id': session_id}) # validates if given session id is valid.
         session = Session.objects.raw({'_id': session_id})
         if action == "start" and session_.status == 'inactive':
-            session.update({'$set': {"start_time": datetime.datetime.now(), 'status': 'active'}})
+            mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
+            session.update({'$set': {"start_time": datetime.datetime.now(), "updated_at": datetime.datetime.now(), 'status': 'active', "mentor": mentor}})
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now()
             seconds = (end_time - session_.start_time).total_seconds()
@@ -157,7 +196,9 @@ def update_session(action=None):
             minutes = int((seconds % 3600) // 60)
             secs = int(seconds % 60)
             duration = '{}:{}:{}'.format(hours, minutes, secs)
-            session.update({'$set': {"end_time": datetime.datetime.now(), 'status': 'ended', 'duration': duration}})
+            session.update({'$set': {"end_time": datetime.datetime.now(), "updated_at": datetime.datetime.now(), 'status': 'ended', 'duration': duration}})
+        elif action == "kill" and session_.status == 'inactive':
+            session.update({'$set': {"updated_at": datetime.datetime.now(), 'status': 'lost'}})
         else:
             raise ValidationError("Presently the session is " + session_.status)
     except Exception as e :
