@@ -43,7 +43,7 @@ def get_all_users():
     users_list = []
     for user in User.objects.all():
         users_list.append({'user_id': str(user._id), 'name':user.name, 'email':user.email, 
-                                'mobile_no':user.mobile_no, 'role':user.role, 'preferences':user.preferences, 'user_group':user.user_group, 'photo_url':user.photo_url, 'created_at':user.created_at, 'updated_at':user.updated_at})
+                                'mobile_no':user.mobile_no, 'nickname': user.nickname, 'role':user.role, 'preferences':user.preferences, 'user_group':user.user_group, 'photo_url':user.photo_url, 'created_at':user.created_at, 'updated_at':user.updated_at})
     return jsonify(users_list), 200
 
 @app.route("/user", methods=['POST'])
@@ -52,7 +52,7 @@ def show_user():
         user_id = ObjectId(request.get_json()['user_id'])
         user = User.objects.get({'_id': user_id})
         return jsonify([{'user_id': str(user._id), 'name':user.name, 'email':user.email, 
-                        'mobile_no':user.mobile_no, 'role':user.role, 'preferences':user.preferences, 'user_group':user.user_group, 'photo_url':user.photo_url, 'created_at':user.created_at, 'updated_at':user.updated_at, 'user_token':user.user_token}]), 200
+                        'mobile_no':user.mobile_no, 'role':user.role, 'nickname': user.nickname, 'preferences':user.preferences, 'user_group':user.user_group, 'photo_url':user.photo_url, 'created_at':user.created_at, 'updated_at':user.updated_at, 'user_token':user.user_token}]), 200
     except Exception as e :
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
@@ -64,7 +64,7 @@ def update_user():
         user_id = ObjectId(request.get_json()['user_id'])
         User.objects.get({'_id': user_id}) #validates if given user id is valid.
         update_params = {}
-        valid_params = ['name', 'mobile_no', 'role', 'nick_name', 'photo_url', 'preferences', 'user_group']
+        valid_params = ['name', 'mobile_no', 'role', 'nickname', 'photo_url', 'preferences', 'user_group']
         for key, value in request.get_json().items():
             if key in valid_params:
                 update_params[key] = value
