@@ -35,7 +35,7 @@ def create_user():
         if str(e) == 'User with this email already exist':
             user = User.objects.get({'email':params['email']})
             return jsonify({'message': str(e), 'error_status': False, 'user_id': str(user._id), 'previously_logged_in': True}), 200
-        return jsonify({'error': str(e), 'error_status': True}), 422
+        return jsonify({'error': str(e), 'error_status': True}), 200
     return jsonify({'message': 'Successfully created user.','user_id': str(user._id), 'error_status': False}), 201
 
 @app.route("/users", methods=['POST'])
@@ -75,7 +75,7 @@ def update_user():
         user.update({'$set': update_params})
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
-        return jsonify({'error': message, 'error_status': True}), 422
+        return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'User updated successfully.', 'error_status': False}), 204
 
 @app.route("/user/delete", methods=['DELETE'])
@@ -85,7 +85,7 @@ def delete_user():
         User.objects.get({'_id': user_id}).delete()
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
-        return jsonify({'error': message, 'error_status': True}), 422
+        return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'User deleted from database.', 'error_status': False}), 202
 
 
@@ -99,7 +99,7 @@ def create_session():
         session.save(force_insert=True)
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
-        return jsonify({'error': message, 'error_status': True}), 422
+        return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
 
 @app.route("/sessions/user", methods=['POST'])
@@ -203,7 +203,7 @@ def update_session(action=None):
             raise ValidationError("Presently the session is " + session_.status)
     except Exception as e :
         message = 'Session does not exists.' if str(e) == '' else str(e)
-        return jsonify({'error': message, 'error_status': True}), 422
+        return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully updated session.','error_status': False}), 204
 
 
@@ -219,7 +219,7 @@ def create_message():
                         content=create_params['content'], type_=create_params['type'], created_at=create_params['created_at'])
         message.save()
     except Exception as e:
-        return jsonify({"error": str(e), 'error_status': True}), 422
+        return jsonify({"error": str(e), 'error_status': True}), 200
     return jsonify({'message': 'Successfully created a message.','error_status': False}), 201
 
 @app.route("/messages", methods=['POST'])
