@@ -152,7 +152,7 @@ def get_requested_sessions():
         sessions_list = []
         for session in Session.objects.all():
             # code.interact(local=dict(globals(), **locals()))
-            if (session.mentor == None) and (session.status == "in_active") and (session.category in preferences ):
+            if (session.status == "inactive") and (session.category in preferences ):
                 sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'members': session.members, 'start_time':
                             session.start_time, 'status': session.status, 'active_duration': session.active_duration, 'end_time': session.end_time,
                             'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
