@@ -115,7 +115,7 @@ def get_student_sessions():
                 mentor = session.mentor
                 mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
                 sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
-                            session.start_time, 'status': session.status, 'duration': session.duration, 'end_time': session.end_time,
+                            session.start_time, 'status': session.status, 'active_duration': session.active_duration, 'end_time': session.end_time,
                             'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
@@ -130,12 +130,13 @@ def get_mentor_sessions():
         sessions_list = []
         for session in Session.objects.all():
             # code.interact(local=dict(globals(), **locals()))
-            if (user_id == str(session.mentor._id)) and (session.status in ["active", "ended"] ):
-                mentor = session.mentor
-                mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
-                sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
-                            session.start_time, 'status': session.status, 'duration': session.duration, 'end_time': session.end_time,
-                            'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
+            if session.mentor != None:
+                if (user_id == str(session.mentor._id)) and (session.status in ["active", "ended"] ):
+                    mentor = session.mentor
+                    mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
+                    sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
+                                session.start_time, 'status': session.status, 'active_duration': session.active_duration, 'end_time': session.end_time,
+                                'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
@@ -151,11 +152,9 @@ def get_requested_sessions():
         sessions_list = []
         for session in Session.objects.all():
             # code.interact(local=dict(globals(), **locals()))
-            if (user_id == str(session.mentor._id)) and (session.status in ["active", "ended"]) and (session.category in preferences ):
-                mentor = session.mentor
-                mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
-                sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
-                            session.start_time, 'status': session.status, 'duration': session.duration, 'end_time': session.end_time,
+            if (session.mentor == None) and (session.status == "in_active") and (session.category in preferences ):
+                sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'members': session.members, 'start_time':
+                            session.start_time, 'status': session.status, 'active_duration': session.active_duration, 'end_time': session.end_time,
                             'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
@@ -170,7 +169,7 @@ def show_session():
         mentor = session.mentor
         mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
         result = {'Session': {'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
-                    session.start_time, 'status': session.status, 'duration': session.duration, 'end_time': session.end_time,
+                    session.start_time, 'status': session.status, 'active_duration': session.active_duration, 'end_time': session.end_time,
                     'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at}}
         return jsonify(result), 200
     except Exception as e:
@@ -195,8 +194,8 @@ def update_session(action=None):
             # code.interact(local=dict(globals(), **locals()))
             minutes = int((seconds % 3600) // 60)
             secs = int(seconds % 60)
-            duration = '{}:{}:{}'.format(hours, minutes, secs)
-            session.update({'$set': {"end_time": datetime.datetime.now(), "updated_at": datetime.datetime.now(), 'status': 'ended', 'duration': duration}})
+            active_duration = '{}:{}:{}'.format(hours, minutes, secs)
+            session.update({'$set': {"end_time": datetime.datetime.now(), "updated_at": datetime.datetime.now(), 'status': 'ended', 'active_duration': active_duration}})
         elif action == "kill" and session_.status == 'inactive':
             session.update({'$set': {"updated_at": datetime.datetime.now(), 'status': 'lost'}})
         else:
@@ -249,4 +248,4 @@ def get_messages():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=3000, debug=True, host='localhost')
