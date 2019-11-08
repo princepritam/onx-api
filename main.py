@@ -216,7 +216,6 @@ def create_message():
     try:
         create_params = request.get_json()
         create_params['created_at'] = datetime.datetime.now()
-        session = Session.objects.get({'_id': ObjectId(create_params['session_id'])})
         message = Message(session=create_params['session_id'], sender=create_params['sender_id'],
                         content=create_params['content'], type_=create_params['type'], created_at=create_params['created_at'])
         message.save()
