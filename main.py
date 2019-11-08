@@ -216,9 +216,13 @@ def create_message():
     try:
         create_params = request.get_json()
         create_params['created_at'] = datetime.datetime.now()
-        message = Message(session=create_params['session_id'], sender=create_params['sender_id'],
-                        content=create_params['content'], type_=create_params['type'], created_at=create_params['created_at'])
-        message.save()
+        session = Session.objects.get({'_id': ObjectId(create_params['session_id'])})
+        if session.status == 'active':
+            message = Message(session=create_params['session_id'], sender=create_params['sender_id'],
+                            content=create_params['content'], type_=create_params['type'], created_at=create_params['created_at'])
+            message.save()
+        else:
+            raise ValidationError("Session is not active.")
     except Exception as e:
         return jsonify({"error": str(e), 'error_status': True}), 200
     return jsonify({'message': 'Successfully created a message.','error_status': False}), 201
