@@ -119,6 +119,9 @@ class Message(MongoModel):
     def is_session_valid(self):
         if not self.session :
             raise ValidationError("Given Session ID does not exists.")
+        else:
+            if session.status != 'active':
+                raise ValidationError("Session is not active.")
         return True
 
 class CorporateGroup(MongoModel):
