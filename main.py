@@ -185,13 +185,15 @@ def update_session(action=None):
         session_ = Session.objects.get({'_id': session_id}) # validates if given session id is valid.
         session = Session.objects.raw({'_id': session_id})
         if action == "start" and session_.status == 'inactive':
-            mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
-            session.update({'$set': {"start_time": datetime.datetime.now(), "updated_at": datetime.datetime.now(), 'status': 'active', "mentor": mentor}})
+            if update_params['mentor_id']:
+                mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
+            else:
+                raise ValidationError("Mentor id is required to start a session.")
+            session.update({'$set': {"start_time": datetime.datetime.now(), "updated_at": datetime.datetime.now(), 'status': 'active', "mentor": mentor._id}})
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now()
             seconds = (end_time - session_.start_time).total_seconds()
             hours = int(seconds // 3600)
-            # code.interact(local=dict(globals(), **locals()))
             minutes = int((seconds % 3600) // 60)
             secs = int(seconds % 60)
             active_duration = '{}:{}:{}'.format(hours, minutes, secs)
@@ -203,7 +205,7 @@ def update_session(action=None):
     except Exception as e :
         message = 'Session does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
-    return jsonify({'message': 'Successfully updated session.','error_status': False}), 204
+    return jsonify({'message': 'Successfully updated session.','error_status': False}), 202
 
 
 
@@ -244,7 +246,6 @@ def get_messages():
 # def create_corporate_gropu():
 #     try:
 #         params = request.get_json()
-
 
 
 if __name__ == '__main__':
