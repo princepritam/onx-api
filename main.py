@@ -32,7 +32,7 @@ def create_user():
     params = request.get_json()
     try:
         user = User(email=params['email'], name=params['name'], role=params['role'], user_token=params['user_token'],
-                     created_at=datetime.datetime.now(), updated_at=datetime.datetime.now(), photo_url=params['photo_url'])
+                     created_at=datetime.datetime.now().isoformat(), updated_at=datetime.datetime.now().isoformat(), photo_url=params['photo_url'])
         user.save(force_insert=True)
     except Exception as e:
         if str(e) == 'User with this email already exist':
@@ -74,7 +74,7 @@ def update_user():
         user = User.objects.raw({'_id': user_id})
         user_valid = User.from_document(update_params) #validate update params
         user_valid.full_clean(exclude=None) #validate update params and raise exception if any
-        update_params['updated_at'] = datetime.datetime.now()
+        update_params['updated_at'] = datetime.datetime.now().isoformat()
         user.update({'$set': update_params})
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
@@ -98,7 +98,7 @@ def delete_user():
 def create_session():
     create_params = request.get_json()
     try:
-        session = Session(type_=create_params['type'], members=create_params['members'], category=create_params['category'], created_at=datetime.datetime.now(), updated_at=datetime.datetime.now())
+        session = Session(type_=create_params['type'], members=create_params['members'], category=create_params['category'], created_at=datetime.datetime.now().isoformat(), updated_at=datetime.datetime.now().isoformat())
         session.save(force_insert=True)
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
@@ -212,17 +212,17 @@ def update_session(action=None):
                 mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
             else:
                 raise ValidationError("Mentor id is required to start a session.")
-            session.update({'$set': {"start_time": datetime.datetime.now(), "updated_at": datetime.datetime.now(), 'status': 'active', "mentor": mentor._id}})
+            session.update({'$set': {"start_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active', "mentor": mentor._id}})
         elif action == "end" and session_.status == 'active':
-            end_time = datetime.datetime.now()
+            end_time = datetime.datetime.now().isoformat()
             seconds = (end_time - session_.start_time).total_seconds()
             hours = int(seconds // 3600)
             minutes = int((seconds % 3600) // 60)
             secs = int(seconds % 60)
             active_duration = '{}:{}:{}'.format(hours, minutes, secs)
-            session.update({'$set': {"end_time": datetime.datetime.now(), "updated_at": datetime.datetime.now(), 'status': 'ended', 'active_duration': active_duration}})
+            session.update({'$set': {"end_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended', 'active_duration': active_duration}})
         elif action == "kill" and session_.status == 'inactive':
-            session.update({'$set': {"updated_at": datetime.datetime.now(), 'status': 'lost'}})
+            session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
         else:
             raise ValidationError("Presently the session is " + session_.status)
     except Exception as e :
@@ -238,7 +238,7 @@ def update_session(action=None):
 def create_message():
     try:
         create_params = request.get_json()
-        create_params['created_at'] = datetime.datetime.now()
+        create_params['created_at'] = datetime.datetime.now().isoformat()
         message = Message(session=create_params['session_id'], sender=create_params['sender_id'],
                         content=create_params['content'], type_=create_params['type'], created_at=create_params['created_at'])
         message.save()
