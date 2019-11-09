@@ -54,8 +54,8 @@ def show_user():
     try:
         user_id = ObjectId(request.get_json()['user_id'])
         user = User.objects.get({'_id': user_id})
-        return jsonify([{'user_id': str(user._id), 'name':user.name, 'email':user.email, 
-                        'mobile_no':user.mobile_no, 'role':user.role, 'nickname': user.nickname, 'preferences':user.preferences, 'user_group':user.user_group, 'photo_url':user.photo_url, 'created_at':user.created_at, 'updated_at':user.updated_at, 'user_token':user.user_token}]), 200
+        return jsonify({'user_id': str(user._id), 'name':user.name, 'email':user.email, 
+                        'mobile_no':user.mobile_no, 'role':user.role, 'nickname': user.nickname, 'preferences':user.preferences, 'user_group':user.user_group, 'photo_url':user.photo_url, 'created_at':user.created_at, 'updated_at':user.updated_at, 'user_token':user.user_token}), 200
     except Exception as e :
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
