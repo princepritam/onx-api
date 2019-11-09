@@ -45,9 +45,8 @@ def create_user():
 def get_all_users():
     users_list = []
     for user in User.objects.all():
-        users_list.append({'user_id': str(user._id), 'name':user.name, 'email':user.email, 
-                                'mobile_no':user.mobile_no, 'nickname': user.nickname, 'role':user.role, 'preferences':user.preferences, 'user_group':user.user_group, 'photo_url':user.photo_url, 'created_at':user.created_at, 'updated_at':user.updated_at})
-    return jsonify(users_list), 200
+        return jsonify({'user_id': str(user._id), 'name':user.name, 'email':user.email, 
+                                'mobile_no':user.mobile_no, 'nickname': user.nickname, 'role':user.role, 'preferences':user.preferences, 'user_group':user.user_group, 'photo_url':user.photo_url, 'created_at':user.created_at, 'updated_at':user.updated_at}), 200
 
 @app.route("/user", methods=['POST'])
 def show_user():
