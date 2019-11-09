@@ -6,6 +6,7 @@ from flask import Flask, redirect, url_for, request, jsonify
 from bson import ObjectId, errors
 from pymodm.connection import connect
 from pymongo.errors import DuplicateKeyError
+from flask_socketio import SocketIO, emit
 
 deploy="mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
 # deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
@@ -16,6 +17,8 @@ connect(deploy, alias="onx-app", retryWrites=False)
 from app.models.models import *
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'unxunxunx'
+socketio = SocketIO(app)
 
 @app.route("/", methods=['GET'])
 def home():
@@ -248,5 +251,20 @@ def get_messages():
 #         params = request.get_json()
 
 
+@socketio.on('message')
+def handle_message(message):
+    print('test received message: ' + message)
+    emit('test', 'test received message: ' + message)
+
+@socketio.on('json')
+def handle_json(json):
+    print('test received json: ' + str(json))
+    emit('test', 'test received json: ' + str(json))
+
+@socketio.on('test')
+def handle_my_custom_event(json):
+    print('received json: ' + str(json))
+    emit('test', 'received json on channel: ' + str(json))
+
 if __name__ == '__main__':
-    app.run()
+    socketio.run(app)
