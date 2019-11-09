@@ -267,4 +267,4 @@ def handle_my_custom_event(json):
     emit('test', 'received json on channel: ' + str(json))
 
 if __name__ == '__main__':
-    socketio.run(app)
+    socketio.run(app, cors_allowed_origins="*")
