@@ -158,10 +158,27 @@ def get_requested_sessions():
             if (session.status == "inactive") and (session.category in preferences ):
                 student_id = session.members[0]
                 student_obj = User.objects.get({'_id':ObjectId(student_id)})
-                student_details = {'name': student_obj.name, 'user_id': str(student_obj._id), 'email': student_obj.email, 'photo_url': student_obj.photo_url}
-                sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'sender_details': student_details, 'members': session.members, 'start_time':
-                            session.start_time, 'status': session.status, 'active_duration': session.active_duration, 'end_time': session.end_time,
-                            'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
+                student_details = {
+                    'name': student_obj.name,
+                    'user_id': str(student_obj._id),
+                    'email': student_obj.email,
+                    'photo_url': student_obj.photo_url
+                }
+                sessions_list.append({
+                    'session_id': str(session._id),
+                    'type': session.type_,
+                    'sender_details': student_details,
+                    'members': session.members,
+                    'start_time': session.start_time,
+                    'status': session.status,
+                    'active_duration': session.active_duration,
+                    'end_time': session.end_time,
+                    'feedback': session.feedback,
+                    'category': session.category,
+                    'created_at': session.created_at,
+                    'updated_at': session.updated_at,
+                    'description': session.description
+                })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
