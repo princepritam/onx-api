@@ -136,9 +136,25 @@ def get_mentor_sessions():
                 if (user_id == str(session.mentor._id)) and (session.status in ["active", "ended"] ):
                     mentor = session.mentor
                     mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
-                    sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
-                                session.start_time, 'status': session.status, 'active_duration': session.active_duration, 'end_time': session.end_time,
-                                'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
+                    # get user deatils 
+                    student_id = session.members[0]
+                    student = User.objects.get({'_id':ObjectId(student_id)})
+                    student_details = {'name': student.name, 'user_id': str(student._id), 'email': student.email, 'photo_url': student.photo_url}
+                    sessions_list.append({
+                        'session_id': str(session._id),
+                        'type': session.type_,
+                        'mentor': mentor_details,
+                        'student': student_details,
+                        'members': session.members,
+                        'start_time': session.start_time,
+                        'status': session.status,
+                        'active_duration': session.active_duration,
+                        'end_time': session.end_time,
+                        'feedback': session.feedback,
+                        'category': session.category,
+                        'created_at': session.created_at,
+                        'updated_at': session.updated_at
+                    })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
