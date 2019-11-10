@@ -188,11 +188,27 @@ def show_session():
     try:
         session_id = ObjectId(request.get_json()['session_id'])
         session = Session.objects.get({"_id": session_id})
+        result = {
+            'session_id': str(session._id),
+            'type': session.type,
+            'members': session.members,
+            'start_time': session.start_time,
+            'status': session.status,
+            'active_duration': session.active_duration,
+            'end_time': session.end_time,
+            'feedback': session.feedback,
+            'category': session.category,
+            'created_at': session.created_at,
+            'updated_at': session.updated_at
+        }
         mentor = session.mentor
-        mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
-        result = {'Session': {'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
-                    session.start_time, 'status': session.status, 'active_duration': session.active_duration, 'end_time': session.end_time,
-                    'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at}}
+        if (mentor):
+            result.mentor = {
+                'name': mentor.name,
+                'user_id': str(mentor._id),
+                'email': mentor.email,
+                'photo_url': mentor.photo_url
+            }
         return jsonify(result), 200
     except Exception as e:
         message = 'Session does not exists.' if str(e) == '' else str(e)
