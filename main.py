@@ -214,12 +214,12 @@ def update_session(action=None):
             session.update({'$set': {"start_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active', "mentor": mentor._id}})
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now().isoformat()
-            seconds = (end_time - session_.start_time).total_seconds()
-            hours = int(seconds // 3600)
-            minutes = int((seconds % 3600) // 60)
-            secs = int(seconds % 60)
-            active_duration = '{}:{}:{}'.format(hours, minutes, secs)
-            session.update({'$set': {"end_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended', 'active_duration': active_duration}})
+            # seconds = (end_time - session_.start_time).total_seconds()
+            # hours = int(seconds // 3600)
+            # minutes = int((seconds % 3600) // 60)
+            # secs = int(seconds % 60)
+            # active_duration = '{}:{}:{}'.format(hours, minutes, secs)
+            session.update({'$set': {"end_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
         elif action == "kill" and session_.status == 'inactive':
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
         else:
