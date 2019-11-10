@@ -97,7 +97,7 @@ def delete_user():
 def create_session():
     create_params = request.get_json()
     try:
-        session = Session(type_=create_params['type'], members=create_params['members'], category=create_params['category'], created_at=datetime.datetime.now().isoformat(), updated_at=datetime.datetime.now().isoformat())
+        session = Session(type_=create_params['type'], members=create_params['members'], category=create_params['category'], created_at=datetime.datetime.now().isoformat(), updated_at=datetime.datetime.now().isoformat(), description=create_params['description'], hours=create_params['hours'])
         session.save(force_insert=True)
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
