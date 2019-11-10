@@ -195,6 +195,7 @@ def show_session():
             'members': session.members,
             'start_time': session.start_time,
             'status': session.status,
+            'hours': session.hours,
             'active_duration': session.active_duration,
             'end_time': session.end_time,
             'feedback': session.feedback,
