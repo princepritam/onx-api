@@ -190,7 +190,7 @@ def show_session():
         session = Session.objects.get({"_id": session_id})
         result = {
             'session_id': str(session._id),
-            'type': session.type,
+            'type': session.type_,
             'members': session.members,
             'start_time': session.start_time,
             'status': session.status,
