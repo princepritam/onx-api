@@ -188,6 +188,7 @@ def show_session():
     try:
         session_id = ObjectId(request.get_json()['session_id'])
         session = Session.objects.get({"_id": session_id})
+        mentor = session.mentor
         result = {
             'session_id': str(session._id),
             'type': session.type_,
@@ -199,16 +200,14 @@ def show_session():
             'feedback': session.feedback,
             'category': session.category,
             'created_at': session.created_at,
-            'updated_at': session.updated_at
-        }
-        mentor = session.mentor
-        if (mentor):
-            result.mentor = {
+            'updated_at': session.updated_at,
+            'mentor': {
                 'name': mentor.name,
                 'user_id': str(mentor._id),
                 'email': mentor.email,
                 'photo_url': mentor.photo_url
-            }
+            } if mentor else {}
+        }
         return jsonify(result), 200
     except Exception as e:
         message = 'Session does not exists.' if str(e) == '' else str(e)
@@ -302,4 +301,4 @@ def handle_my_custom_event(json):
     emit('test', 'received json on channel: ' + str(json))
 
 if __name__ == '__main__':
-    socketio.run(app, cors_allowed_origins="*")
+    socketio.run(app)
