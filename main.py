@@ -37,7 +37,7 @@ def create_user():
     except Exception as e:
         if str(e) == 'User with this email already exist':
             user = User.objects.get({'email':params['email']})
-            return jsonify({'message': str(e), 'error_status': False, 'user_id': str(user._id), 'previously_logged_in': True}), 200
+            return jsonify({'message': str(e), 'error_status': False, 'user_id': str(user._id), 'role': user.role, 'previously_logged_in': True}), 200
         return jsonify({'error': str(e), 'error_status': True}), 200
     return jsonify({'message': 'Successfully created user.','user_id': str(user._id), 'error_status': False}), 201
 
