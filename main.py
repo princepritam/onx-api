@@ -1,6 +1,6 @@
 #!flask/bin/python
 # Python standard libraries
-import code, os, json, datetime
+import code, os, json, datetime, time
 
 from flask import Flask, redirect, url_for, request, jsonify
 from bson import ObjectId, errors
@@ -244,13 +244,21 @@ def update_session(action=None):
             else:
                 raise ValidationError("Mentor id is required to start a session.")
             session.update({'$set': {"start_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active', "mentor": mentor._id}})
+            time.sleep(6)
+            end_time = datetime.datetime.now().isoformat()
+            seconds = (end_time - session_.start_time).total_seconds()
+            hours = int(seconds // 3600)
+            minutes = int((seconds % 3600) // 60)
+            secs = int(seconds % 60)
+            active_duration = '{}:{}:{}'.format(hours, minutes, secs)
+            session.update({'$set': {"end_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now().isoformat()
-            # seconds = (end_time - session_.start_time).total_seconds()
-            # hours = int(seconds // 3600)
-            # minutes = int((seconds % 3600) // 60)
-            # secs = int(seconds % 60)
-            # active_duration = '{}:{}:{}'.format(hours, minutes, secs)
+            seconds = (end_time - session_.start_time).total_seconds()
+            hours = int(seconds // 3600)
+            minutes = int((seconds % 3600) // 60)
+            secs = int(seconds % 60)
+            active_duration = '{}:{}:{}'.format(hours, minutes, secs)
             session.update({'$set': {"end_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
         elif action == "kill" and session_.status == 'inactive':
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
@@ -319,3 +327,4 @@ def handle_my_custom_event(json):
 
 if __name__ == '__main__':
     socketio.run(app)
+    # app.run(port=3000, debug=True, host='localhost')
