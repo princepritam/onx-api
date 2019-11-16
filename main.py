@@ -12,7 +12,7 @@ deploy="mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
 # deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
 local="mongodb://localhost:27017/onx"
 
-connect(deploy, alias="onx-app", retryWrites=False)
+connect(local, alias="onx-app", retryWrites=False)
 
 from app.models.models import *
 
@@ -20,10 +20,10 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'unxunxunx'
 socketio = SocketIO(app)
 
-@app.route("/", methods=['GET'])
+# Health check
+@app.route("/ping", methods=['GET'])
 def home():
     return 'hello'
-
 
 
 # APIs for User
@@ -45,8 +45,9 @@ def create_user():
 def get_all_users():
     users_list = []
     for user in User.objects.all():
-        return jsonify({'user_id': str(user._id), 'name':user.name, 'email':user.email, 
-                                'mobile_no':user.mobile_no, 'nickname': user.nickname, 'role':user.role, 'preferences':user.preferences, 'user_group':user.user_group, 'photo_url':user.photo_url, 'created_at':user.created_at, 'updated_at':user.updated_at}), 200
+        users_list.append({'user_id': str(user._id), 'name':user.name, 'email':user.email, 
+                                'mobile_no':user.mobile_no, 'nickname': user.nickname, 'role':user.role, 'preferences':user.preferences, 'user_group':user.user_group, 'photo_url':user.photo_url, 'created_at':user.created_at, 'updated_at':user.updated_at})
+    return jsonify({"Users": users_list}), 200
 
 @app.route("/user", methods=['POST'])
 def show_user():
@@ -78,7 +79,7 @@ def update_user():
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
-    return jsonify({'message': 'User updated successfully.', 'error_status': False}), 204
+    return jsonify({'message': 'User updated successfully.', 'error_status': False}), 202
 
 @app.route("/user/delete", methods=['DELETE'])
 def delete_user():
@@ -241,17 +242,11 @@ def update_session(action=None):
         if action == "start" and session_.status == 'inactive':
             if update_params['mentor_id']:
                 mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
+                if mentor.role != "mentor":
+                    raise ValidationError("Given mentor id is incorrect, the role of the user is 'student'.")
             else:
                 raise ValidationError("Mentor id is required to start a session.")
-            session.update({'$set': {"start_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active', "mentor": mentor._id}})
-            time.sleep(6)
-            end_time = datetime.datetime.now().isoformat()
-            seconds = (end_time - session_.start_time).total_seconds()
-            hours = int(seconds // 3600)
-            minutes = int((seconds % 3600) // 60)
-            secs = int(seconds % 60)
-            active_duration = '{}:{}:{}'.format(hours, minutes, secs)
-            session.update({'$set': {"end_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
+            session.update({'$set': {"start_time": datetime.datetime.now().isoformat() , "updated_at": datetime.datetime.now().isoformat(), 'status': 'active', "mentor": mentor._id}})
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now().isoformat()
             seconds = (end_time - session_.start_time).total_seconds()
@@ -259,7 +254,7 @@ def update_session(action=None):
             minutes = int((seconds % 3600) // 60)
             secs = int(seconds % 60)
             active_duration = '{}:{}:{}'.format(hours, minutes, secs)
-            session.update({'$set': {"end_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
+            session.update({'$set': {"end_time": datetime.datetime.now().isoformat(), "active_duration": active_duration, "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
         elif action == "kill" and session_.status == 'inactive':
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
         else:
@@ -268,7 +263,6 @@ def update_session(action=None):
         message = 'Session does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully updated session.','error_status': False}), 202
-
 
 
 
@@ -326,5 +320,5 @@ def handle_my_custom_event(json):
     emit('test', 'received json on channel: ' + str(json))
 
 if __name__ == '__main__':
-    socketio.run(app)
-    # app.run(port=3000, debug=True, host='localhost')
+    # socketio.run(app)
+    app.run(port=3000, debug=True, host='localhost')

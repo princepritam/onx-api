@@ -63,7 +63,7 @@ class Session(MongoModel):
     members = fields.ListField(mongo_name='members', validators=[validate_users])
     status = fields.CharField(choices=('active', 'inactive', 'ended', 'lost'), mongo_name='status', default='inactive')
     start_time = fields.DateTimeField(required=False, mongo_name='start_time')
-    category = fields.CharField(mongo_name='category')
+    category = fields.CharField(mongo_name='category', required=True)
     description = fields.CharField(mongo_name='description')
     active_duration = fields.CharField(mongo_name='active_duration')
     hours = fields.IntegerField(mongo_name='hours', default=1)
