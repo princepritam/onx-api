@@ -7,14 +7,14 @@ from bson import ObjectId, errors
 from pymodm.connection import connect
 from pymongo.errors import DuplicateKeyError
 from flask_socketio import SocketIO, emit
-
-deploy="mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
-# deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
-local="mongodb://localhost:27017/onx"
-
-connect(local, alias="onx-app", retryWrites=False)
-
 from app.models.models import *
+
+deploy = "mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
+# deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
+local = "mongodb://localhost:27017/onx"
+
+connect(deploy, alias="onx-app", retryWrites=False)
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'unxunxunx'
@@ -320,5 +320,5 @@ def handle_my_custom_event(json):
     emit('test', 'received json on channel: ' + str(json))
 
 if __name__ == '__main__':
-    # socketio.run(app)
-    app.run(port=3000, debug=True, host='localhost')
+    socketio.run(app)
+    # app.run(port=3000, debug=True, host='localhost')
