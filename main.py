@@ -239,7 +239,7 @@ def update_session(action=None):
 		session_id = ObjectId(update_params['session_id'])
 		session_ = Session.objects.get({'_id': session_id}) # validates if given session id is valid.
 		session = Session.objects.raw({'_id': session_id})
-		emit(session_id, jsonify({ 'action': action }), namespace='/')
+		emit('session', jsonify({ 'action': action, 'session_id': session_id }), namespace='/')
 		if action == "start" and session_.status == 'inactive':
 			if update_params['mentor_id']:
 				mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
@@ -277,7 +277,7 @@ def create_message():
 		message = Message(session=create_params['session_id'], sender=create_params['sender_id'],
 						content=create_params['content'], type_=create_params['type'], created_at=create_params['created_at'])
 		message.save()
-		emit(session_id, jsonify(create_params), namespace='/')
+		emit('chat', jsonify(create_params), namespace='/')
 	except Exception as e:
 		return jsonify({"error": str(e), 'error_status': True}), 200
 	return jsonify({'message': 'Successfully created a message.','error_status': False}), 201
