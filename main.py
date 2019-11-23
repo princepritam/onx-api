@@ -239,7 +239,7 @@ def update_session(action=None):
 		session_id = ObjectId(update_params['session_id'])
 		session_ = Session.objects.get({'_id': session_id}) # validates if given session id is valid.
 		session = Session.objects.raw({'_id': session_id})
-		socketio.emit('session', jsonify({ 'action': action, 'session_id': session_id }))
+		socketio.emit('session', jsonify({ 'action': action, 'session_id': update_params['session_id'] }))
 		if action == "start" and session_.status == 'inactive':
 			if update_params['mentor_id']:
 				mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
