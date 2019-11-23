@@ -18,7 +18,7 @@ connect(deploy, alias="onx-app", retryWrites=False)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'unxunxunx'
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Health check
 @app.route("/ping", methods=['GET'])
