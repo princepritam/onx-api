@@ -239,6 +239,7 @@ def update_session(action=None):
 		session_id = ObjectId(update_params['session_id'])
 		session_ = Session.objects.get({'_id': session_id}) # validates if given session id is valid.
 		session = Session.objects.raw({'_id': session_id})
+		emit(session_id, jsonify({ 'action': action }))
 		if action == "start" and session_.status == 'inactive':
 			if update_params['mentor_id']:
 				mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
@@ -276,6 +277,7 @@ def create_message():
 		message = Message(session=create_params['session_id'], sender=create_params['sender_id'],
 						content=create_params['content'], type_=create_params['type'], created_at=create_params['created_at'])
 		message.save()
+		emit(session_id, jsonify(create_params))
 	except Exception as e:
 		return jsonify({"error": str(e), 'error_status': True}), 200
 	return jsonify({'message': 'Successfully created a message.','error_status': False}), 201
@@ -304,21 +306,6 @@ def get_messages():
 #     try:
 #         params = request.get_json()
 
-
-@socketio.on('message')
-def handle_message(message):
-	print('test received message: ' + message)
-	emit('test', 'test received message: ' + message)
-
-@socketio.on('json')
-def handle_json(json):
-	print('test received json: ' + str(json))
-	emit('test', 'test received json: ' + str(json))
-
-@socketio.on('test')
-def handle_my_custom_event(json):
-	print('received json: ' + str(json))
-	emit('test', 'received json on channel: ' + str(json))
 
 if __name__ == '__main__':
 	socketio.run(app)
