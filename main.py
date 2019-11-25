@@ -30,6 +30,12 @@ def home():
     return 'hello'
 
 
+@app.route("/emit", methods=['GET'])
+def emit():
+    # emit('chat', 'Hi')
+    socketio.emit('chat', 'Hi socketio')
+    return 'done'
+
 # APIs for User
 @app.route("/user/create", methods=['POST'])
 def create_user():
@@ -46,7 +52,7 @@ def create_user():
     return jsonify({'message': 'Successfully created user.', 'user_id': str(user._id), 'error_status': False}), 201
 
 
-@app.route("/users", methods=['POST'])
+@app.route("/users", methods=['GET'])
 def get_all_users():
     users_list = []
     for user in User.objects.all():
@@ -74,12 +80,14 @@ def update_user():
         # validates if given user id is valid.
         User.objects.get({'_id': user_id})
         update_params = {}
-        valid_params = ['name', 'mobile_no', 'role', 'nickname', 'photo_url', 'preferences', 'user_group', 'updated_photo_url']
+        valid_params = ['name', 'mobile_no', 'role', 'nickname',
+                        'photo_url', 'preferences', 'user_group', 'updated_photo_url']
         for key, value in request.get_json().items():
             if key in valid_params:
                 update_params[key] = value
         user = User.objects.raw({'_id': user_id})
-        user_valid = User.from_document(update_params)  # validate update params
+        user_valid = User.from_document(
+            update_params)  # validate update params
         # validate update params and raise exception if any
         user_valid.full_clean(exclude=None)
         update_params['updated_at'] = datetime.datetime.now().isoformat()
@@ -126,7 +134,8 @@ def get_student_sessions():
             # code.interact(local=dict(globals(), **locals()))
             if (user_id in session_users) and (session.status in ["active", "ended"]):
                 mentor = session.mentor
-                mentor_details = {'name': mentor.name, 'user_id': str(mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
+                mentor_details = {'name': mentor.name, 'user_id': str(
+                    mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
                 sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
                                       session.start_time, 'status': session.status, 'active_duration': session.active_duration, 'end_time': session.end_time,
                                       'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
@@ -250,54 +259,64 @@ def show_session():
 @app.route("/session/update", methods=['PATCH'])
 @app.route("/session/update/<string:action>", methods=['PATCH'])
 def update_session(action=None):
-	try:
-		update_params = request.get_json()
-		session_id = ObjectId(update_params['session_id'])
-		session_ = Session.objects.get({'_id': session_id}) # validates if given session id is valid.
-		session = Session.objects.raw({'_id': session_id})
-		socketio.emit('session', jsonify({ 'action': action, 'session_id': update_params['session_id'] }))
-		if action == "start" and session_.status == 'inactive':
-			if update_params['mentor_id']:
-				mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
-				if mentor.role != "mentor":
-					raise ValidationError("Given mentor id is incorrect, the role of the user is 'student'.")
-			else:
-				raise ValidationError("Mentor id is required to start a session.")
-			session.update({'$set': {"start_time": datetime.datetime.now().isoformat() , "updated_at": datetime.datetime.now().isoformat(), 'status': 'active', "mentor": mentor._id}})
-		elif action == "end" and session_.status == 'active':
-			end_time = datetime.datetime.now()
-			# code.interact(local=dict(globals(), **locals()))
-			seconds = (end_time - session_.start_time).total_seconds()
-			hours = int(seconds // 3600)
-			minutes = int((seconds % 3600) // 60)
-			secs = int(seconds % 60)
-			active_duration = '{}:{}:{}'.format(hours, minutes, secs)
-			session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration, "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
-		elif action == "kill" and session_.status == 'inactive':
-			session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
-		else:
-			raise ValidationError("Presently the session is " + session_.status)
-	except Exception as e :
-		message = 'Session does not exists.' if str(e) == '' else str(e)
-		return jsonify({'error': message, 'error_status': True}), 200
-	return jsonify({'message': 'Successfully updated session.','error_status': False}), 202
-
+    try:
+        update_params = request.get_json()
+        session_id = ObjectId(update_params['session_id'])
+        # validates if given session id is valid.
+        session_ = Session.objects.get({'_id': session_id})
+        session = Session.objects.raw({'_id': session_id})
+        socketio.emit('session', 
+            {'action': action, 'session_id': update_params['session_id']})
+        if action == "start" and session_.status == 'inactive':
+            if update_params['mentor_id']:
+                mentor = User.objects.get(
+                    {'_id': ObjectId(update_params['mentor_id'])})
+                if mentor.role != "mentor":
+                    raise ValidationError(
+                        "Given mentor id is incorrect, the role of the user is 'student'.")
+            else:
+                raise ValidationError(
+                    "Mentor id is required to start a session.")
+            session.update({'$set': {"start_time": datetime.datetime.now().isoformat(
+            ), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active', "mentor": mentor._id}})
+        elif action == "end" and session_.status == 'active':
+            end_time = datetime.datetime.now()
+            # code.interact(local=dict(globals(), **locals()))
+            seconds = (end_time - session_.start_time).total_seconds()
+            hours = int(seconds // 3600)
+            minutes = int((seconds % 3600) // 60)
+            secs = int(seconds % 60)
+            active_duration = '{}:{}:{}'.format(hours, minutes, secs)
+            session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration,
+                                     "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
+        elif action == "kill" and session_.status == 'inactive':
+            session.update(
+                {'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
+        else:
+            raise ValidationError(
+                "Presently the session is " + session_.status)
+    except Exception as e:
+        message = 'Session does not exists.' if str(e) == '' else str(e)
+        return jsonify({'error': message, 'error_status': True}), 200
+    return jsonify({'message': 'Successfully updated session.', 'error_status': False}), 202
 
 
 # APIs for Message
 @app.route("/message/create", methods=['POST'])
 def create_message():
-	try:
-		create_params = request.get_json()
-		create_params['created_at'] = datetime.datetime.now().isoformat()
-		message = Message(session=create_params['session_id'], sender=create_params['sender_id'],
-						content=create_params['content'], type_=create_params['type'], created_at=create_params['created_at'])
-		message.save()
-		socketio.emit('chat', jsonify(create_params))
-		emit('chat', jsonify({ 'test': 'hello'}))
-	except Exception as e:
-		return jsonify({"error": str(e), 'error_status': True}), 200
-	return jsonify({'message': 'Successfully created a message.','error_status': False}), 201
+    try:
+        create_params = request.get_json()
+        create_params['created_at'] = datetime.datetime.now().isoformat()
+        message = Message(session=create_params['session_id'], sender=create_params['sender_id'],
+                          content=create_params['content'], type_=create_params['type'], created_at=create_params['created_at'])
+        message.save()
+        socketio.emit('chat', create_params)
+        # print(jsonify(create_params))
+    # emit('chat', jsonify({ 'test': 'hello'}))
+    except Exception as e:
+        return jsonify({"error": str(e), 'error_status': True}), 200
+    return jsonify({'message': 'Successfully created a message.', 'error_status': False}), 201
+
 
 @app.route("/messages", methods=['POST'])
 def get_messages():
@@ -331,11 +350,9 @@ def create_corporate_group():
         return jsonify({'error': str(e), 'error_status': True}), 404
     return jsonify({'message': "Successfully created group.", "error_status": False}), 201
 
-@socketio.on('test')
-def handle_my_custom_event(json):
-    emit('chat', 'hello')
+
 
 
 if __name__ == '__main__':
-    socketio.run(app)
-    # app.run(port=3000, debug=True, host='localhost')
+    # socketio.run(app)
+    app.run(port=3000, debug=True, host='localhost')

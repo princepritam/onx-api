@@ -50,16 +50,16 @@ class User(MongoModel):
         except User.DoesNotExist:
             pass
 
-    # def validate_user_group(self):
-    #     try:
-    #         code.interact(local=dict(globals(), **locals()))
-    #         if self.user_group != None:
-    #             CorporateGroup.objects.get({'code': self.user_group.code})
-    #         else:
-    #             pass
-    #     except Exception as e:
-    #         message = "Invalid corporate code." if str(e) == "" else str(e)
-    #         raise ValidationError(message)
+    def validate_user_group(self):
+        try:
+            code.interact(local=dict(globals(), **locals()))
+            if self.user_group != None:
+                CorporateGroup.objects.get({'code': self.user_group})
+            else:
+                pass
+        except Exception as e:
+            message = "Invalid corporate code." if str(e) == "" else str(e)
+            raise ValidationError(message)
 
 
 # session model
