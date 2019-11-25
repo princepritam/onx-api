@@ -278,6 +278,7 @@ def create_message():
 						content=create_params['content'], type_=create_params['type'], created_at=create_params['created_at'])
 		message.save()
 		socketio.emit('chat', jsonify(create_params))
+		emit('chat', jsonify({ 'test': 'hello'}))
 	except Exception as e:
 		return jsonify({"error": str(e), 'error_status': True}), 200
 	return jsonify({'message': 'Successfully created a message.','error_status': False}), 201
@@ -305,6 +306,10 @@ def get_messages():
 # def create_corporate_gropu():
 #     try:
 #         params = request.get_json()
+
+@socketio.on('test')
+def handle_my_custom_event(json):
+    emit('chat', 'hello')
 
 
 if __name__ == '__main__':
