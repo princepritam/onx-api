@@ -21,13 +21,12 @@ class CorporateGroup(MongoModel):
 class User(MongoModel):
     email = fields.EmailField(required=False, mongo_name='email')
     name = fields.CharField(required=False, mongo_name='name')
-    mobile_no = fields.CharField(
-        min_length=10, max_length=10, required=False, mongo_name='mobile_no')
-    role = fields.CharField(
-        choices=('mentor', 'student', 'admin'), required=False, mongo_name='role')
-    photo_url = fields.CharField(mongo_name='photo_url', default = None)
+    mobile_no = fields.CharField(min_length=10, max_length=10, required=False, mongo_name='mobile_no')
+    role = fields.CharField(choices=('mentor', 'student', 'admin'), required=False, mongo_name='role')
+    photo_url = fields.CharField(mongo_name='photo_url', default=None)
+    updated_photo_url = fields.CharField(mongo_name='updated_photo_url', default=None)
     user_token = fields.CharField(mongo_name='user_token')
-    user_group = fields.ReferenceField(CorporateGroup, mongo_name='user_group', default=None)
+    user_group = fields.CharField(mongo_name='user_group', default=None)
     nickname = fields.CharField(mongo_name='nickname')
     preferences = fields.ListField(mongo_name='preferences')
     created_at = fields.DateTimeField(mongo_name='created_at')
@@ -42,7 +41,7 @@ class User(MongoModel):
 
     def clean(self):
         self.check_duplicate_user()
-        self.validate_user_group()
+        # self.validate_user_group()
 
     def check_duplicate_user(self):
         try:
@@ -51,16 +50,16 @@ class User(MongoModel):
         except User.DoesNotExist:
             pass
 
-    def validate_user_group(self):
-        try:
-            code.interact(local=dict(globals(), **locals()))
-            if self.user_group != None:
-                CorporateGroup.objects.get({'code': self.user_group.code})
-            else:
-                pass
-        except Exception as e:
-            message = "Invalid corporate code." if str(e) == "" else str(e)
-            raise ValidationError(message)
+    # def validate_user_group(self):
+    #     try:
+    #         code.interact(local=dict(globals(), **locals()))
+    #         if self.user_group != None:
+    #             CorporateGroup.objects.get({'code': self.user_group.code})
+    #         else:
+    #             pass
+    #     except Exception as e:
+    #         message = "Invalid corporate code." if str(e) == "" else str(e)
+    #         raise ValidationError(message)
 
 
 # session model
