@@ -354,5 +354,5 @@ def create_corporate_group():
 
 
 if __name__ == '__main__':
-    # socketio.run(app)
-    app.run(port=3000, debug=True, host='localhost')
+    socketio.run(app)
+    # app.run(port=3000, debug=True, host='localhost')
