@@ -40,7 +40,8 @@ class User(MongoModel):
         final = True
 
     def clean(self):
-        self.check_duplicate_user()
+        if self.email != None:
+            self.check_duplicate_user()
         # self.validate_user_group()
 
     def check_duplicate_user(self):
@@ -87,22 +88,18 @@ def validate_users(user_ids):
 
 
 class Session(MongoModel):
-    type_ = fields.CharField(required=True, choices=[
-                             'single', 'multiple'], mongo_name='type')
-    mentor = fields.ReferenceField(
-        User, mongo_name='mentor', validators=[validate_mentor])
-    members = fields.ListField(
-        mongo_name='members', validators=[validate_users])
-    status = fields.CharField(choices=[
-                              'active', 'inactive', 'ended', 'lost'], mongo_name='status', default='inactive')
+    type_ = fields.CharField(required=False, choices=['single', 'multiple'], mongo_name='type')
+    mentor = fields.ReferenceField(User, mongo_name='mentor', validators=[validate_mentor])
+    members = fields.ListField(mongo_name='members', validators=[validate_users])
+    status = fields.CharField(choices=['active', 'inactive', 'ended', 'lost'], mongo_name='status', default='inactive')
     start_time = fields.DateTimeField(required=False, mongo_name='start_time')
-    category = fields.CharField(mongo_name='category', required=True)
+    category = fields.CharField(mongo_name='category', required=False)
     description = fields.CharField(mongo_name='description')
     active_duration = fields.CharField(mongo_name='active_duration')
     hours = fields.IntegerField(mongo_name='hours', default=1)
     end_time = fields.DateTimeField(mongo_name='end_time')
     feedback = fields.CharField(max_length=1000, mongo_name='feed_back')
-    created_at = fields.DateTimeField(required=True, mongo_name='created_at')
+    created_at = fields.DateTimeField(required=False, mongo_name='created_at')
     updated_at = fields.DateTimeField(mongo_name='updated_at')
 
     class Meta:
@@ -114,11 +111,12 @@ class Session(MongoModel):
         self.validate_type()
 
     def validate_type(self):
-        if self.type_ == 'multiple' and len(self.members) < 2:
-            raise ValidationError(
-                "Atleast two members are required to start a multiple session.")
-        if self.type_ == 'single' and len(self.members) > 1:
-            raise ValidationError("Only one member is allowed in single mode.")
+        if self.type_ != None:
+            if self.type_ == 'multiple' and len(self.members) < 2:
+                raise ValidationError(
+                    "Atleast two members are required to start a multiple session.")
+            if self.type_ == 'single' and len(self.members) > 1:
+                raise ValidationError("Only one member is allowed in single mode.")
 
 
 # message model

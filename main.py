@@ -17,7 +17,7 @@ deploy = "mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
 # deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
 local = "mongodb://localhost:27017/onx"
 
-connect(deploy, alias="onx-app", retryWrites=False)
+connect(local, alias="onx-app", retryWrites=False)
 
 
 app = Flask(__name__)
@@ -39,15 +39,24 @@ def emit():
 # APIs for User
 @app.route("/user/create", methods=['POST'])
 def create_user():
-    params = request.get_json()
+    create_params = {}
     try:
-        user = User(email=params['email'], name=params['name'], role=params['role'], user_token=params['user_token'],
-                    created_at=datetime.datetime.now().isoformat(), updated_at=datetime.datetime.now().isoformat(), photo_url=params['photo_url'])
+        valid_params = ['name', 'mobile_no', 'role', 'nickname', 'email', 'user_token'
+                        'photo_url', 'preferences', 'user_group', 'updated_photo_url']
+        for key, value in request.get_json().items(): # validate update params
+            if key in valid_params:
+                create_params[key] = value
+        user = User()
         user.save(force_insert=True)
+        User.from_document(create_params).full_clean(exclude=None)
+        create_params['created_at'] = datetime.datetime.now().isoformat()
+        User.objects.raw({'_id': user._id}).update({'$set': create_params})
     except Exception as e:
         if str(e) == 'User with this email already exist':
-            user = User.objects.get({'email': params['email']})
-            return jsonify({'message': str(e), 'error_status': False, 'user_id': str(user._id), 'role': user.role, 'previously_logged_in': True}), 200
+            # code.interact(local=dict(globals(), **locals()))
+            user_ = User.objects.get({'email': create_params['email']})
+            return jsonify({'message': str(e), 'error_status': False, 'user_id': str(user_._id), 'role': user_.role, 'previously_logged_in': True}), 200
+        user.delete()
         return jsonify({'error': str(e), 'error_status': True}), 200
     return jsonify({'message': 'Successfully created user.', 'user_id': str(user._id), 'error_status': False}), 201
 
@@ -82,14 +91,11 @@ def update_user():
         update_params = {}
         valid_params = ['name', 'mobile_no', 'role', 'nickname',
                         'photo_url', 'preferences', 'user_group', 'updated_photo_url']
-        for key, value in request.get_json().items():
+        for key, value in request.get_json().items(): # validate update params
             if key in valid_params:
                 update_params[key] = value
         user = User.objects.raw({'_id': user_id})
-        user_valid = User.from_document(
-            update_params)  # validate update params
-        # validate update params and raise exception if any
-        user_valid.full_clean(exclude=None)
+        User.from_document(update_params).full_clean(exclude=None)  # validate update params and raise exception if any
         update_params['updated_at'] = datetime.datetime.now().isoformat()
         user.update({'$set': update_params})
     except Exception as e:
@@ -112,12 +118,19 @@ def delete_user():
 # APIs for Session
 @app.route("/session/create", methods=['POST'])
 def create_session():
-    create_params = request.get_json()
+    create_params = {}
     try:
-        session = Session(type_=create_params['type'], members=create_params['members'], category=create_params['category'], created_at=datetime.datetime.now(
-        ).isoformat(), updated_at=datetime.datetime.now().isoformat(), description=create_params['description'], hours=create_params['hours'])
+        valid_params = ['type', 'members', 'category', 'hours', 'description']
+        for key, val in request.get_json().items():
+            if key in valid_params:
+                create_params[key] = val
+        session = Session()
         session.save(force_insert=True)
+        Session.from_document(create_params).full_clean(exclude=None)
+        create_params['created_at'] = datetime.datetime.now().isoformat()
+        Session.objects.raw({'_id': session._id}).update({'$set': create_params})
     except Exception as e:
+        session.delete()
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
@@ -354,5 +367,5 @@ def create_corporate_group():
 
 
 if __name__ == '__main__':
-    socketio.run(app)
-    # app.run(port=3000, debug=True, host='localhost')
+    # socketio.run(app)
+    app.run(port=3000, debug=True, host='localhost')
