@@ -17,7 +17,7 @@ deploy = "mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
 # deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
 local = "mongodb://localhost:27017/onx"
 
-connect(local, alias="onx-app", retryWrites=False)
+connect(deploy, alias="onx-app", retryWrites=False)
 
 
 app = Flask(__name__)
@@ -367,5 +367,5 @@ def create_corporate_group():
 
 
 if __name__ == '__main__':
-    # socketio.run(app)
-    app.run(port=3000, debug=True, host='localhost')
+    socketio.run(app)
+    # app.run(port=3000, debug=True, host='localhost')
