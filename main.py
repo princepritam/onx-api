@@ -43,7 +43,7 @@ def create_user():
     create_params = {}
     try:
         valid_params = ['name', 'mobile_no', 'role', 'nickname', 'email', 'user_token'
-                        'photo_url', 'preferences', 'user_group', 'updated_photo_url']
+                        'photo_url', 'preferences', 'user_group', 'uploaded_photo_url']
         for key, value in request.get_json().items(): # validate update params
             if key in valid_params:
                 create_params[key] = value
@@ -93,7 +93,7 @@ def update_user():
         User.objects.get({'_id': user_id})
         update_params = {}
         valid_params = ['name', 'mobile_no', 'role', 'nickname',
-                        'photo_url', 'preferences', 'user_group', 'updated_photo_url']
+                        'photo_url', 'preferences', 'user_group', 'uploaded_photo_url']
         for key, value in request.get_json().items(): # validate update params
             if key in valid_params:
                 update_params[key] = value
@@ -283,7 +283,7 @@ def update_session(action=None):
         session_ = Session.objects.get({'_id': session_id})
         session = Session.objects.raw({'_id': session_id})
         socketio.emit('session', {'action': action, 'session_id': update_params['session_id']})
-        if action == "start" and session_.status == 'inactive':
+        if action == "start" and session_.status == 'accepted':
             if update_params['mentor_id']:
                 mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
                 if mentor.role != "mentor":
@@ -301,6 +301,9 @@ def update_session(action=None):
             active_duration = '{}:{}:{}'.format(hours, minutes, secs)
             session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration,
                                      "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
+        elif action == "accept" and session_.status == 'inactive':
+            session.update(
+                {'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'accepted'}})
         elif action == "kill" and session_.status == 'inactive':
             session.update(
                 {'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
