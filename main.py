@@ -12,6 +12,7 @@ from pymodm.connection import connect
 from pymongo.errors import DuplicateKeyError
 from flask_socketio import SocketIO, emit
 from app.models.models import *
+import asyncio
 
 deploy = "mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
 # deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
@@ -53,10 +54,12 @@ def create_user():
         User.objects.raw({'_id': user._id}).update({'$set': create_params})
     except Exception as e:
         if str(e) == 'User with this email already exist':
+            user.delete()
             # code.interact(local=dict(globals(), **locals()))
             user_ = User.objects.get({'email': create_params['email']})
             return jsonify({'message': str(e), 'error_status': False, 'user_id': str(user_._id), 'role': user_.role, 'previously_logged_in': True}), 200
         user.delete()
+        # code.interact(local=dict(globals(), **locals()))
         return jsonify({'error': str(e), 'error_status': True}), 200
     return jsonify({'message': 'Successfully created user.', 'user_id': str(user._id), 'error_status': False}), 201
 
@@ -130,6 +133,7 @@ def create_session():
         create_params['created_at'] = datetime.datetime.now().isoformat()
         Session.objects.raw({'_id': session._id}).update({'$set': create_params})
     except Exception as e:
+        # code.interact(local=dict(globals(), **locals()))
         session.delete()
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
@@ -278,23 +282,18 @@ def update_session(action=None):
         # validates if given session id is valid.
         session_ = Session.objects.get({'_id': session_id})
         session = Session.objects.raw({'_id': session_id})
-        socketio.emit('session', 
-            {'action': action, 'session_id': update_params['session_id']})
+        socketio.emit('session', {'action': action, 'session_id': update_params['session_id']})
         if action == "start" and session_.status == 'inactive':
             if update_params['mentor_id']:
-                mentor = User.objects.get(
-                    {'_id': ObjectId(update_params['mentor_id'])})
+                mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
                 if mentor.role != "mentor":
-                    raise ValidationError(
-                        "Given mentor id is incorrect, the role of the user is 'student'.")
+                    raise ValidationError("Given mentor id is incorrect, the role of the user is 'student'.")
             else:
-                raise ValidationError(
-                    "Mentor id is required to start a session.")
-            session.update({'$set': {"start_time": datetime.datetime.now().isoformat(
-            ), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active', "mentor": mentor._id}})
+                raise ValidationError("Mentor id is required to start a session.")
+            session.update({'$set': {"start_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active', "mentor": mentor._id}})
+            # code.interact(local=dict(globals(), **locals()))
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now()
-            # code.interact(local=dict(globals(), **locals()))
             seconds = (end_time - session_.start_time).total_seconds()
             hours = int(seconds // 3600)
             minutes = int((seconds % 3600) // 60)
@@ -313,6 +312,9 @@ def update_session(action=None):
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully updated session.', 'error_status': False}), 202
 
+async def end_session_after(hours):
+    await asyncio.sleep(hours*20)
+    update_session("end")
 
 # APIs for Message
 @app.route("/message/create", methods=['POST'])
