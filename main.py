@@ -57,7 +57,7 @@ def create_user():
             user.delete()
             # code.interact(local=dict(globals(), **locals()))
             user_ = User.objects.get({'email': create_params['email']})
-            return jsonify({'message': str(e), 'error_status': False, 'mentor_verified': user.mentor_verified, 'user_id': str(user_._id), 'role': user_.role, 'previously_logged_in': True}), 200
+            return jsonify({'message': str(e), 'error_status': False, 'mentor_verified': user_.mentor_verified, 'user_id': str(user_._id), 'role': user_.role, 'previously_logged_in': True}), 200
         user.delete()
         # code.interact(local=dict(globals(), **locals()))
         return jsonify({'error': str(e), 'error_status': True}), 200
