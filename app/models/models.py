@@ -31,7 +31,12 @@ class User(MongoModel):
     preferences = fields.ListField(mongo_name='preferences')
     created_at = fields.DateTimeField(mongo_name='created_at')
     updated_at = fields.DateTimeField(mongo_name='updated_at')
+    linkedin = fields.CharField(mongo_name='linkedin')
+    certificates = fields.CharField(mongo_name='certificates')
+    courses = fields.CharField(mongo_name='courses')
+    background = fields.CharField(mongo_name='background')
     mentor_verified = fields.BooleanField(mongo_name='mentor_verified')
+    hours_per_day = fields.CharField(mongo_name='hours_per_day')
 
     class Meta:
         write_concern = WriteConcern(j=True)
