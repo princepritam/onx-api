@@ -69,8 +69,8 @@ def get_all_users():
     users_list = []
     for user in User.objects.all():
         users_list.append({'user_id': str(user._id), 'name': user.name, 'email': user.email,
-                           'mobile_no': user.mobile_no, 'nickname': user.nickname, 'role': user.role, 'preferences': user.preferences, 'user_group': user.user_group, 'photo_url': user.photo_url, 'created_at': user.created_at, 'updated_at': user.updated_at})
-    return jsonify({"Users": users_list}), 200
+                           'mobile_no': user.mobile_no, 'nickname': user.nickname, 'role': user.role, 'preferences': user.preferences, 'mentor_verified': user.mentor_verified, 'user_group': user.user_group, 'photo_url': user.photo_url, 'created_at': user.created_at, 'updated_at': user.updated_at, 'user_token': user.user_token, 'uploaded_photo_url': user.uploaded_photo_url})
+    return jsonify({"users": users_list}), 200
 
 
 @app.route("/user", methods=['POST'])
@@ -79,7 +79,7 @@ def show_user():
         user_id = ObjectId(request.get_json()['user_id'])
         user = User.objects.get({'_id': user_id})
         return jsonify({'user_id': str(user._id), 'name': user.name, 'email': user.email,
-                        'mobile_no': user.mobile_no, 'role': user.role, 'nickname': user.nickname, 'preferences': user.preferences, 'user_group': user.user_group, 'photo_url': user.photo_url, 'created_at': user.created_at, 'updated_at': user.updated_at, 'user_token': user.user_token}), 200
+                        'mobile_no': user.mobile_no, 'role': user.role, 'nickname': user.nickname, 'preferences': user.preferences, 'mentor_verified': user.mentor_verified, 'user_group': user.user_group, 'photo_url': user.photo_url, 'created_at': user.created_at, 'updated_at': user.updated_at, 'user_token': user.user_token, 'uploaded_photo_url': user.uploaded_photo_url}), 200
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
@@ -361,14 +361,55 @@ def get_messages():
 def create_corporate_group():
     try:
         params = request.get_json()
-        corporate_group = CorporateGroup(
-            name=params['name'], code=params['code'])
+        corporate_group = CorporateGroup(name=params['name'], code=params['code'])
         corporate_group.save()
     except Exception as e:
         return jsonify({'error': str(e), 'error_status': True}), 404
     return jsonify({'message': "Successfully created group.", "error_status": False}), 201
 
+@app.route("/activity/create", methods=['POST'])
+def create_activity():
+    try:
+        create_params = {}
+        valid_params = ['is_dynamic', 'user_id', 'content']
+        for key, val in request.get_json().items():
+            if key in valid_params:
+                create_params[key] = val
+        activity = Activity()
+        activity.save(force_insert=True)
+        Activity.from_document(create_params).full_clean(exclude=None)
+        create_params['created_at'] = datetime.datetime.now().isoformat()
+        Activity.objects.raw({'_id':activity._id}).update({'$set': create_params})
+    except Exception as e:
+        activity.delete()
+        return jsonify({'error': str(e), 'error_status': True}), 422
+    return jsonify({'activity_id': activity._id,'message': "Successfully created activity", 'error_status': False}), 201
 
+@app.route("/activity/update", methods=['POST'])
+def update_activity():
+    try:
+        activity = Activity.objects.raw({'_id': ObjectId(request.get_json()['activity_id'])})
+        update_params = {}
+        valid_params = ['content']
+        for key, val in request.get_json().items():
+            if key in valid_params:
+                update_params[key] = val
+        Activity.from_document(update_params).full_clean(exclude=None)
+        update_params['updated_at'] = datetime.datetime.now().isoformat()
+        activity.update({'$set': update_params})
+    except Exception as e:
+        activity.delete()
+        return jsonify({'error': str(e), 'error_status': True}), 422
+    return jsonify({'message': "Successfully updated activity", 'error_status': False}), 201
+
+@app.route("/activity", methods=['POST'])
+def get_activity():
+    try:
+        activity = Activity.objects.get({'_id': ObjectId(request.get_json()['activity_id'])})
+    except Exception as e:
+        message = 'Activity does not exists.' if str(e) == '' else str(e)
+        return jsonify({'error': message, 'error_status': True}), 404
+    return jsonify({'activity_id': activity._id, 'is_dynamic': activity.is_dynamic, 'content': activity.content, 'user_id': activity.user._id}), 200
 
 
 if __name__ == '__main__':
