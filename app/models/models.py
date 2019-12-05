@@ -37,6 +37,7 @@ class User(MongoModel):
     background = fields.CharField(mongo_name='background')
     mentor_verified = fields.BooleanField(mongo_name='mentor_verified')
     hours_per_day = fields.CharField(mongo_name='hours_per_day')
+    login_status = fields.BooleanField(mongo_name='login_status', default=True)
 
     class Meta:
         write_concern = WriteConcern(j=True)
