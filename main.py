@@ -43,7 +43,7 @@ def create_user():
     create_params = {}
     try:
         valid_params = ['name', 'mobile_no', 'role', 'nickname', 'email', 'user_token'
-                        'photo_url', 'preferences', 'user_group', 'uploaded_photo_url']
+                        'photo_url', 'preferences', 'user_group', 'uploaded_photo_url', 'background', 'linkedin', 'hours_per_day', 'certificates', 'courses']
         for key, value in request.get_json().items(): # validate update params
             if key in valid_params:
                 create_params[key] = value
@@ -93,7 +93,7 @@ def update_user():
         User.objects.get({'_id': user_id})
         update_params = {}
         valid_params = ['name', 'mobile_no', 'role', 'nickname',
-                        'photo_url', 'preferences', 'user_group', 'uploaded_photo_url']
+                        'photo_url', 'preferences', 'user_group', 'uploaded_photo_url', 'background', 'linkedin', 'hours_per_day', 'certificates', 'courses']
         for key, value in request.get_json().items(): # validate update params
             if key in valid_params:
                 update_params[key] = value
