@@ -164,7 +164,7 @@ class Message(MongoModel):
         return True
 
 class Activity(MongoModel):
-    user_id = fields.ReferenceField(User, mongo_name='user_id')
+    user = fields.ReferenceField(User, mongo_name='user')
     is_dynamic = fields.CharField(mongo_name='is_dynamic')
     content = fields.CharField(mongo_name='content')
     created_at = fields.DateTimeField(required=False, mongo_name='created_at')
