@@ -35,7 +35,7 @@ class User(MongoModel):
     certificates = fields.CharField(mongo_name='certificates')
     courses = fields.CharField(mongo_name='courses')
     background = fields.CharField(mongo_name='background')
-    mentor_verified = fields.BooleanField(mongo_name='mentor_verified')
+    mentor_verified = fields.BooleanField(mongo_name='mentor_verified', default=False)
     hours_per_day = fields.CharField(mongo_name='hours_per_day')
     login_status = fields.BooleanField(mongo_name='login_status', default=True)
 
@@ -127,12 +127,10 @@ class Session(MongoModel):
 
 # message model
 class Message(MongoModel):
-    session = fields.ReferenceField(
-        Session, required=True, mongo_name="session")
+    session = fields.ReferenceField(Session, required=True, mongo_name="session")
     sender = fields.ReferenceField(User, required=True, mongo_name="sender")
     content = fields.CharField(required=True, mongo_name="content")
-    type_ = fields.CharField(
-        required=True, mongo_name="type", choices=['text', 'image'])
+    type_ = fields.CharField(required=True, mongo_name="type", choices=['text', 'image'])
     created_at = fields.DateTimeField(required=True, mongo_name="created_at")
 
     class Meta:
@@ -164,3 +162,19 @@ class Message(MongoModel):
             if self.session.status != 'active':
                 raise ValidationError("Session is not active.")
         return True
+
+class Activity(MongoModel):
+    user_id = fields.ReferenceField(User, mongo_name='user_id')
+    is_dynamic = fields.CharField(mongo_name='is_dynamic')
+    content = fields.CharField(mongo_name='content')
+    created_at = fields.DateTimeField(required=False, mongo_name='created_at')
+    updated_at = fields.DateTimeField(mongo_name='updated_at')
+    
+ 
+    class Meta:
+        write_concern = WriteConcern(j=True)
+        ignore_unknown_fields = True
+        connection_alias = 'onx-app'
+    
+    def clean(self):
+        pass
