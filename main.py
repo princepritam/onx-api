@@ -133,7 +133,7 @@ def create_session():
         create_params['created_at'] = datetime.datetime.now().isoformat()
         Session.objects.raw({'_id': session._id}).update({'$set': create_params})
         # code.interact(local=dict(globals(), **locals()))
-        Activity(user_id=create_params['members'][0], is_dynamic= False, content= ("You successfully requested for a new session of type " + create_params['category']), created_at= datetime.datetime.now().isoformat()).save()
+        Activity(user_id=create_params['members'][0], session_id=str(session._id), is_dynamic=False, content= ("You successfully requested for a new session of type " + create_params['category']), created_at= datetime.datetime.now().isoformat()).save()
         socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
     except Exception as e:
         session.delete()
@@ -323,7 +323,7 @@ def update_session(action=None):
             else:
                 raise ValidationError("Student id is required to start a session.")
             session.update({'$set': {"start_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active'}})
-            Activity(user_id= session_.members[0], is_dynamic= False, content= "You successfully started a session", created_at= datetime.datetime.now().isoformat()).save()
+            Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "You successfully started a session", created_at= datetime.datetime.now().isoformat()).save()
             # code.interact(local=dict(globals(), **locals()))
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now()
@@ -334,7 +334,7 @@ def update_session(action=None):
             active_duration = '{}:{}:{}'.format(hours, minutes, secs)
             session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration,
                                      "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
-            Activity(user_id= session_.members[0], is_dynamic= False, content= "Successfully Ended session", created_at= datetime.datetime.now().isoformat()).save()
+            Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "Successfully Ended session", created_at= datetime.datetime.now().isoformat()).save()
         elif action == "accept" and session_.status == 'inactive':
             if update_params['mentor_id']:
                 mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
