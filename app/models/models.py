@@ -169,7 +169,7 @@ class Message(MongoModel):
 class Activity(MongoModel):
     user_id = fields.CharField(mongo_name='user_id')
     session_id = fields.CharField(mongo_name='session_id')
-    is_dynamic = fields.CharField(mongo_name='is_dynamic')
+    is_dynamic = fields.BooleanField(mongo_name='is_dynamic')
     content = fields.CharField(mongo_name='content')
     created_at = fields.DateTimeField(required=False, mongo_name='created_at')
     updated_at = fields.DateTimeField(mongo_name='updated_at')
