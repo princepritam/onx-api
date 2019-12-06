@@ -18,7 +18,7 @@ deploy = "mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
 # deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
 local = "mongodb://localhost:27017/onx"
 
-connect(deploy, alias="onx-app", retryWrites=False)
+connect(local, alias="onx-app", retryWrites=False)
 
 
 app = Flask(__name__)
@@ -133,7 +133,7 @@ def create_session():
         create_params['created_at'] = datetime.datetime.now().isoformat()
         Session.objects.raw({'_id': session._id}).update({'$set': create_params})
         # code.interact(local=dict(globals(), **locals()))
-        Activity(user_id=create_params['members'][0], is_dynamic= True, content= ("You successfully requested for a new session of type" + create_params['category']), created_at= datetime.datetime.now().isoformat()).save()
+        Activity(user_id=create_params['members'][0], is_dynamic= False, content= ("You successfully requested for a new session of type " + create_params['category']), created_at= datetime.datetime.now().isoformat()).save()
         socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
     except Exception as e:
         session.delete()
@@ -157,7 +157,10 @@ def get_student_sessions():
                     mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
                 sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
                                       session.start_time, 'status': session.status, 'active_duration': session.active_duration, 'end_time': session.end_time,
-                                      'feedback': session.feedback, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
+                                    'user_feedback': session.user_feedback,
+                                    'mentor_feedback': session.mentor_feedback,
+                                    "user_rating": session.user_rating,
+                                    "mentor_rating": session.mentor_rating, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
@@ -192,7 +195,10 @@ def get_mentor_sessions():
                         'status': session.status,
                         'active_duration': session.active_duration,
                         'end_time': session.end_time,
-                        'feedback': session.feedback,
+                        'user_feedback': session.user_feedback,
+                        'mentor_feedback': session.mentor_feedback,
+                        "user_rating": session.user_rating,
+                        "mentor_rating": session.mentor_rating,
                         'category': session.category,
                         'created_at': session.created_at,
                         'updated_at': session.updated_at
@@ -231,7 +237,10 @@ def get_requested_sessions():
                     'status': session.status,
                     'active_duration': session.active_duration,
                     'end_time': session.end_time,
-                    'feedback': session.feedback,
+                    'user_feedback': session.user_feedback,
+                    'mentor_feedback': session.mentor_feedback,
+                    "user_rating": session.user_rating,
+                    "mentor_rating": session.mentor_rating,
                     'category': session.category,
                     'created_at': session.created_at,
                     'updated_at': session.updated_at,
@@ -258,7 +267,10 @@ def show_session():
             'hours': session.hours,
             'active_duration': session.active_duration,
             'end_time': session.end_time,
-            'feedback': session.feedback,
+            'user_feedback': session.user_feedback,
+            'mentor_feedback': session.mentor_feedback,
+            "user_rating": session.user_rating,
+            "mentor_rating": session.mentor_rating,
             'category': session.category,
             'created_at': session.created_at,
             'updated_at': session.updated_at,
@@ -331,7 +343,7 @@ def update_session(action=None):
             else:
                 raise ValidationError("Mentor id is required to accept a session.")
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'accepted', "mentor": mentor._id}})
-            Activity(user_id= session_.members[0], is_dynamic= True, content= (mentor.name + "accepted your session for" + session_.category), created_at= datetime.datetime.now().isoformat()).save()
+            Activity(user_id= session_.members[0], is_dynamic= True, content= (mentor.name + " accepted your session for " + session_.category), created_at= datetime.datetime.now().isoformat()).save()
         elif action == "kill" and session_.status == 'inactive':
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
         else:
@@ -440,5 +452,5 @@ def get_activity():
 
 
 if __name__ == '__main__':
-    socketio.run(app)
-    # app.run(port=3000, debug=True, host='localhost')
+    # socketio.run(app)
+    app.run(port=3000, debug=True, host='localhost')
