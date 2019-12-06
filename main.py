@@ -132,9 +132,10 @@ def create_session():
         Session.from_document(create_params).full_clean(exclude=None)
         create_params['created_at'] = datetime.datetime.now().isoformat()
         Session.objects.raw({'_id': session._id}).update({'$set': create_params})
+        # code.interact(local=dict(globals(), **locals()))
+        Activity({'user_id': create_params['members'][0], 'is_dynamic': True, 'content': ("You successfully requested for a new session of type" + create_params['category']), 'created_at': datetime.datetime.now().isoformat()}).save()
         socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
     except Exception as e:
-        # code.interact(local=dict(globals(), **locals()))
         session.delete()
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
@@ -275,6 +276,24 @@ def show_session():
 
 
 @app.route("/session/update", methods=['PATCH'])
+def update_session_():
+    update_params = {}
+    try:
+        valid_params = ['mentor_rating', 'user_rating', 'mentor_feedback', 'user_feedback']
+        for key, val in request.get_json().items():
+            if key in valid_params:
+                update_params[key] = val
+        session = Session.objects.get({'_id':ObjectId(request.get_json()['session_id'])})
+        Session.from_document(update_params).full_clean(exclude=None)
+        update_params['created_at'] = datetime.datetime.now().isoformat()
+        Session.objects.raw({'_id': session._id}).update({'$set': update_params})
+        # code.interact(local=dict(globals(), **locals()))
+        socketio.emit('session', {'action': 'update', 'session_id': str(session._id)})
+    except Exception as e:
+        message = 'Session does not exists.' if str(e) == '' else str(e)
+        return jsonify({'error': message, 'error_status': True}), 422
+    return jsonify({'message': 'Successfully updated session.', 'session_id': str(session._id), 'error_status': False}), 201
+
 @app.route("/session/update/<string:action>", methods=['PATCH'])
 def update_session(action=None):
     try:
@@ -285,13 +304,14 @@ def update_session(action=None):
         session = Session.objects.raw({'_id': session_id})
         socketio.emit('session', {'action': action, 'session_id': update_params['session_id']})
         if action == "start" and session_.status == 'accepted':
-            if update_params['mentor_id']:
-                mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
-                if mentor.role != "mentor":
-                    raise ValidationError("Given mentor id is incorrect, the role of the user is 'student'.")
+            if update_params['student_id']:
+                student = User.objects.get({'_id': ObjectId(update_params['student_id'])})
+                if student.role != "student":
+                    raise ValidationError("Given mentor id is incorrect, role of the user is not 'student'.")
             else:
-                raise ValidationError("Mentor id is required to start a session.")
-            session.update({'$set': {"start_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active', "mentor": mentor._id}})
+                raise ValidationError("Student id is required to start a session.")
+            session.update({'$set': {"start_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active'}})
+            Activity({'user_id': session_.members[0], 'is_dynamic': False, 'content': "You successfully started a session", 'created_at': datetime.datetime.now().isoformat()}).save()
             # code.interact(local=dict(globals(), **locals()))
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now()
@@ -302,15 +322,20 @@ def update_session(action=None):
             active_duration = '{}:{}:{}'.format(hours, minutes, secs)
             session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration,
                                      "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
+            Activity({'user_id': session_.members[0], 'is_dynamic': False, 'content': "Successfully Ended session", 'created_at': datetime.datetime.now().isoformat()}).save()
         elif action == "accept" and session_.status == 'inactive':
-            session.update(
-                {'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'accepted'}})
+            if update_params['mentor_id']:
+                mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
+                if mentor.role != "mentor":
+                    raise ValidationError("Given mentor id is incorrect, role of the user is not 'mentor'.")
+            else:
+                raise ValidationError("Mentor id is required to accept a session.")
+            session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'accepted', "mentor": mentor._id}})
+            Activity({'user_id': session_.members[0], 'is_dynamic': True, 'content': (mentor.name + "accepted your session for" + session_.category), 'created_at': datetime.datetime.now().isoformat()}).save()
         elif action == "kill" and session_.status == 'inactive':
-            session.update(
-                {'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
+            session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
         else:
-            raise ValidationError(
-                "Presently the session is " + session_.status)
+            raise ValidationError("Presently the session is " + session_.status)
     except Exception as e:
         message = 'Session does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
@@ -374,15 +399,14 @@ def create_activity():
         for key, val in request.get_json().items():
             if key in valid_params:
                 create_params[key] = val
-        activity = Activity()
-        activity.save(force_insert=True)
+        activity = Activity().save()
         Activity.from_document(create_params).full_clean(exclude=None)
         create_params['created_at'] = datetime.datetime.now().isoformat()
         Activity.objects.raw({'_id':activity._id}).update({'$set': create_params})
     except Exception as e:
         activity.delete()
         return jsonify({'error': str(e), 'error_status': True}), 422
-    return jsonify({'activity_id': activity._id,'message': "Successfully created activity", 'error_status': False}), 201
+    return jsonify({'activity_id': str(activity._id),'message': "Successfully created activity", 'error_status': False}), 201
 
 @app.route("/activity/update", methods=['POST'])
 def update_activity():
@@ -397,18 +421,22 @@ def update_activity():
         update_params['updated_at'] = datetime.datetime.now().isoformat()
         activity.update({'$set': update_params})
     except Exception as e:
-        activity.delete()
         return jsonify({'error': str(e), 'error_status': True}), 422
     return jsonify({'message': "Successfully updated activity", 'error_status': False}), 201
 
 @app.route("/activity", methods=['POST'])
 def get_activity():
     try:
-        activity = Activity.objects.get({'_id': ObjectId(request.get_json()['activity_id'])})
+        activities = Activity.objects.all()
+        user_activities = []
+        for activity in activities:
+            if activity.user_id == request.get_json()['user_id']:
+                # code.interact(local=dict(globals(), **locals()))
+                user_activities.append({'activity_id': str(activity._id), 'is_dynamic': activity.is_dynamic, 'content': activity.content, 'user_id': activity.user_id})
     except Exception as e:
-        message = 'Activity does not exists.' if str(e) == '' else str(e)
+        message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
-    return jsonify({'activity_id': activity._id, 'is_dynamic': activity.is_dynamic, 'content': activity.content, 'user_id': activity.user._id}), 200
+    return jsonify({"activities": user_activities}), 200
 
 
 if __name__ == '__main__':

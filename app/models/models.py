@@ -104,7 +104,10 @@ class Session(MongoModel):
     active_duration = fields.CharField(mongo_name='active_duration')
     hours = fields.IntegerField(mongo_name='hours', default=1)
     end_time = fields.DateTimeField(mongo_name='end_time')
-    feedback = fields.CharField(max_length=1000, mongo_name='feed_back')
+    user_feedback = fields.CharField(max_length=1000, mongo_name='user_feedback')
+    mentor_feedback = fields.CharField(max_length=1000, mongo_name='mentor_feedback')
+    user_rating = fields.IntegerField(mongo_name='user_rating')
+    mentor_rating = fields.IntegerField(mongo_name='mentor_rating')
     created_at = fields.DateTimeField(required=False, mongo_name='created_at')
     updated_at = fields.DateTimeField(mongo_name='updated_at')
 
@@ -164,7 +167,7 @@ class Message(MongoModel):
         return True
 
 class Activity(MongoModel):
-    user = fields.ReferenceField(User, mongo_name='user')
+    user_id = fields.CharField(mongo_name='user_id')
     is_dynamic = fields.CharField(mongo_name='is_dynamic')
     content = fields.CharField(mongo_name='content')
     created_at = fields.DateTimeField(required=False, mongo_name='created_at')
@@ -177,4 +180,15 @@ class Activity(MongoModel):
         connection_alias = 'onx-app'
     
     def clean(self):
+        # self.validate_user()
         pass
+
+    def validate_user(self):
+        try:
+            if self.user_id != None:
+                user = User.objects.get({'_id': ObjectId(self.user_id)})
+            # else:
+            #     raise ValidationError("user_id is mandatory for creating an activity.")
+        except Exception as e:
+            message = 'User does not exists' if str(e) == "" else str(e)
+            raise ValidationError(message)
