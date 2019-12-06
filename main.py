@@ -343,7 +343,7 @@ def update_session(action=None):
             else:
                 raise ValidationError("Mentor id is required to accept a session.")
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'accepted', "mentor": mentor._id}})
-            Activity(user_id= session_.members[0], is_dynamic= True, content= (mentor.name + " accepted your session for " + session_.category), created_at= datetime.datetime.now().isoformat()).save()
+            Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= True, content= (mentor.name + " accepted your session for " + session_.category), created_at= datetime.datetime.now().isoformat()).save()
         elif action == "kill" and session_.status == 'inactive':
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
         else:
@@ -444,7 +444,7 @@ def get_activity():
         for activity in activities:
             if activity.user_id == request.get_json()['user_id']:
                 # code.interact(local=dict(globals(), **locals()))
-                user_activities.append({'activity_id': str(activity._id), 'is_dynamic': activity.is_dynamic, 'content': activity.content, 'user_id': activity.user_id})
+                user_activities.append({'activity_id': str(activity._id), 'session_id': activity.session_id, 'is_dynamic': activity.is_dynamic, 'content': activity.content, 'user_id': activity.user_id})
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
