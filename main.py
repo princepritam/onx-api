@@ -132,6 +132,7 @@ def create_session():
         Session.from_document(create_params).full_clean(exclude=None)
         create_params['created_at'] = datetime.datetime.now().isoformat()
         Session.objects.raw({'_id': session._id}).update({'$set': create_params})
+        socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
     except Exception as e:
         # code.interact(local=dict(globals(), **locals()))
         session.delete()
@@ -328,9 +329,7 @@ def create_message():
         message = Message(session=create_params['session_id'], sender=create_params['sender_id'],
                           content=create_params['content'], type_=create_params['type'], created_at=create_params['created_at'])
         message.save()
-        socketio.emit('chat', create_params)
-        # print(jsonify(create_params))
-    # emit('chat', jsonify({ 'test': 'hello'}))
+        socketio.emit('chat-' + create_params['session_id'], create_params)
     except Exception as e:
         return jsonify({"error": str(e), 'error_status': True}), 200
     return jsonify({'message': 'Successfully created a message.', 'error_status': False}), 201
