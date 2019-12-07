@@ -133,7 +133,7 @@ def create_session():
         create_params['created_at'] = datetime.datetime.now().isoformat()
         Session.objects.raw({'_id': session._id}).update({'$set': create_params})
         # code.interact(local=dict(globals(), **locals()))
-        Activity(user_id=create_params['members'][0], session_id=str(session._id), is_dynamic=False, content= ("You successfully requested for a new session of type " + create_params['category'] + "."), created_at= datetime.datetime.now().isoformat()).save()
+        Activity(user_id=create_params['members'][0], session_id=str(session._id), is_dynamic=False, content= ("You successfully requested for a new session for " + create_params['category'] + "."), created_at= datetime.datetime.now().isoformat()).save()
         socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
     except Exception as e:
         session.delete()
