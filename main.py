@@ -317,14 +317,14 @@ def show_session():
                 'nickname': mentor.nickname,
                 'user_id': str(mentor._id),
                 'email': mentor.email,
-                'photo_url': mentor.uploaded_photo_url
+                'uploaded_photo_url': mentor.uploaded_photo_url
             } if mentor else {},
             'student': {
                 'name': student.name,
                 'nickname': mentor.nickname,
                 'user_id': str(student._id),
                 'email': student.email,
-                'photo_url': student.uploaded_photo_url
+                'uploaded_photo_url': student.uploaded_photo_url
             } if student else {}
         }
         return jsonify(result), 200
