@@ -259,7 +259,8 @@ def show_session():
         session = Session.objects.get({"_id": session_id})
         mentor = session.mentor
         studentId = session.members[0]
-        student = User.objects.get({ "_id": studentId })
+        # code.interact(local=dict(globals(), **locals()))
+        student = User.objects.get({ "_id": ObjectId(studentId) })
         result = {
             'session_id': str(session._id),
             'type': session.type_,
