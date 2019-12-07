@@ -153,14 +153,40 @@ def get_student_sessions():
             # code.interact(local=dict(globals(), **locals()))
             if (user_id in session_users) and (session.status in ["active", "ended"]):
                 mentor = session.mentor
-                mentor_details = {'name': mentor.name, 'user_id': str(
-                    mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
-                sessions_list.append({'session_id': str(session._id), 'type': session.type_, 'mentor': mentor_details, 'members': session.members, 'start_time':
-                                      session.start_time, 'status': session.status, 'active_duration': session.active_duration, 'end_time': session.end_time,
-                                    'user_feedback': session.user_feedback,
-                                    'mentor_feedback': session.mentor_feedback,
-                                    "user_rating": session.user_rating,
-                                    "mentor_rating": session.mentor_rating, 'category': session.category, 'created_at': session.created_at, 'updated_at': session.updated_at})
+                mentor_details = {
+                    'name': mentor.name, 
+                    'nickname': mentor.nickname, 
+                    'user_id': str(mentor._id), 
+                    'email': mentor.email, 
+                    'uploaded_photo_url': mentor.uploaded_photo_url
+                }
+                student_id = session.members[0]
+                student = User.objects.get({'_id': ObjectId(student_id)})
+                student_details = {
+                    'name': student.name, 
+                    'nickname': student.nickname, 
+                    'user_id': str(student._id), 
+                    'email': student.email, 
+                    'uploaded_photo_url': student.uploaded_photo_url
+                }
+                sessions_list.append({
+                    'session_id': str(session._id), 
+                    'type': session.type_, 
+                    'mentor': mentor_details, 
+                    'student': student_details,
+                    'members': session.members, 
+                    'start_time':session.start_time, 
+                    'status': session.status, 
+                    'active_duration': session.active_duration, 
+                    'end_time': session.end_time,
+                    'user_feedback': session.user_feedback,
+                    'mentor_feedback': session.mentor_feedback,
+                    "user_rating": session.user_rating,
+                    "mentor_rating": session.mentor_rating, 
+                    'category': session.category, 
+                    'created_at': session.created_at, 
+                    'updated_at': session.updated_at
+                })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
@@ -178,13 +204,22 @@ def get_mentor_sessions():
             if session.mentor != None:
                 if (user_id == str(session.mentor._id)) and (session.status in ["active", "ended"]):
                     mentor = session.mentor
-                    mentor_details = {'name': mentor.name, 'user_id': str(
-                        mentor._id), 'email': mentor.email, 'photo_url': mentor.photo_url}
-                    # get user deatils
+                    mentor_details = {
+                        'name': mentor.name, 
+                        'nickname': mentor.nickname, 
+                        'user_id': str(mentor._id), 
+                        'email': mentor.email, 
+                        'uploaded_photo_url': mentor.uploaded_photo_url
+                    }
                     student_id = session.members[0]
                     student = User.objects.get({'_id': ObjectId(student_id)})
-                    student_details = {'name': student.name, 'user_id': str(
-                        student._id), 'email': student.email, 'photo_url': student.photo_url}
+                    student_details = {
+                        'name': student.name, 
+                        'nickname': student.nickname, 
+                        'user_id': str(student._id), 
+                        'email': student.email, 
+                        'uploaded_photo_url': student.uploaded_photo_url
+                    }
                     sessions_list.append({
                         'session_id': str(session._id),
                         'type': session.type_,
