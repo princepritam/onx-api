@@ -425,7 +425,7 @@ def update_activity():
     try:
         activity = Activity.objects.raw({'_id': ObjectId(request.get_json()['activity_id'])})
         update_params = {}
-        valid_params = ['content']
+        valid_params = ['content','is_dynamic']
         for key, val in request.get_json().items():
             if key in valid_params:
                 update_params[key] = val
