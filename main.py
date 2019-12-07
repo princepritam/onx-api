@@ -278,12 +278,14 @@ def show_session():
             'updated_at': session.updated_at,
             'mentor': {
                 'name': mentor.name,
+                'nickname': mentor.nickname,
                 'user_id': str(mentor._id),
                 'email': mentor.email,
                 'photo_url': mentor.uploaded_photo_url
             } if mentor else {},
             'student': {
                 'name': student.name,
+                'nickname': mentor.nickname,
                 'user_id': str(student._id),
                 'email': student.email,
                 'photo_url': student.uploaded_photo_url
