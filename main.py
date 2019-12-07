@@ -258,6 +258,8 @@ def show_session():
         session_id = ObjectId(request.get_json()['session_id'])
         session = Session.objects.get({"_id": session_id})
         mentor = session.mentor
+        studentId = session.memebrs[0]
+        student = User.objects.get({ "_id": studentId })
         result = {
             'session_id': str(session._id),
             'type': session.type_,
@@ -278,8 +280,14 @@ def show_session():
                 'name': mentor.name,
                 'user_id': str(mentor._id),
                 'email': mentor.email,
-                'photo_url': mentor.photo_url
-            } if mentor else {}
+                'photo_url': mentor.uploaded_photo_url
+            } if mentor else {},
+            'student': {
+                'name': student.name,
+                'user_id': str(student._id),
+                'email': student.email,
+                'photo_url': student.uploaded_photo_url
+            } if student else {}
         }
         return jsonify(result), 200
     except Exception as e:
