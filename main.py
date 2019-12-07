@@ -490,7 +490,14 @@ def get_activity():
         for activity in activities:
             if activity.user_id == request.get_json()['user_id']:
                 # code.interact(local=dict(globals(), **locals()))
-                user_activities.append({'activity_id': str(activity._id), 'session_id': activity.session_id, 'is_dynamic': activity.is_dynamic, 'content': activity.content, 'user_id': activity.user_id})
+                user_activities.append({
+                    'activity_id': str(activity._id), 
+                    'session_id': activity.session_id, 
+                    'is_dynamic': activity.is_dynamic, 
+                    'content': activity.content, 
+                    'user_id': activity.user_id,
+                    'created_at': activity.created_at
+                })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
