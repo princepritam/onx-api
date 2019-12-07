@@ -258,7 +258,7 @@ def show_session():
         session_id = ObjectId(request.get_json()['session_id'])
         session = Session.objects.get({"_id": session_id})
         mentor = session.mentor
-        studentId = session.memebrs[0]
+        studentId = session.members[0]
         student = User.objects.get({ "_id": studentId })
         result = {
             'session_id': str(session._id),
