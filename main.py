@@ -47,18 +47,16 @@ def create_user():
         for key, value in request.get_json().items(): # validate update params
             if key in valid_params:
                 create_params[key] = value
+        User.from_document(create_params).full_clean(exclude=None)
         user = User()
         user.save(force_insert=True)
-        User.from_document(create_params).full_clean(exclude=None)
         create_params['created_at'] = datetime.datetime.now().isoformat()
         User.objects.raw({'_id': user._id}).update({'$set': create_params})
     except Exception as e:
         if str(e) == 'User with this email already exist':
-            user.delete()
             # code.interact(local=dict(globals(), **locals()))
             user_ = User.objects.get({'email': create_params['email']})
             return jsonify({'message': str(e), 'error_status': False, 'mentor_verified': user_.mentor_verified, 'user_id': str(user_._id), 'role': user_.role, 'previously_logged_in': True}), 200
-        user.delete()
         # code.interact(local=dict(globals(), **locals()))
         return jsonify({'error': str(e), 'error_status': True}), 200
     return jsonify({'message': 'Successfully created user.', 'user_id': str(user._id), 'error_status': False}), 201
@@ -127,16 +125,15 @@ def create_session():
         for key, val in request.get_json().items():
             if key in valid_params:
                 create_params[key] = val
+        Session.from_document(create_params).full_clean(exclude=None)
         session = Session()
         session.save(force_insert=True)
-        Session.from_document(create_params).full_clean(exclude=None)
         create_params['created_at'] = datetime.datetime.now().isoformat()
         Session.objects.raw({'_id': session._id}).update({'$set': create_params})
         # code.interact(local=dict(globals(), **locals()))
         Activity(user_id=create_params['members'][0], session_id=str(session._id), is_dynamic=False, content= ("You successfully requested for a new session of type " + create_params['category'] + "."), created_at= datetime.datetime.now().isoformat()).save()
         socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
     except Exception as e:
-        session.delete()
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
@@ -148,44 +145,41 @@ def get_student_sessions():
         user_id = request.get_json()['user_id']
         User.objects.get({'_id': ObjectId(user_id)})
         sessions_list = []
-        for session in Session.objects.all():
-            session_users = session.members.copy()
-            # code.interact(local=dict(globals(), **locals()))
-            if (user_id in session_users) and (session.status in ["active", "ended"]):
-                mentor = session.mentor
-                mentor_details = {
-                    'name': mentor.name, 
-                    'nickname': mentor.nickname, 
-                    'user_id': str(mentor._id), 
-                    'email': mentor.email, 
-                    'uploaded_photo_url': mentor.uploaded_photo_url
-                }
-                student_id = session.members[0]
-                student = User.objects.get({'_id': ObjectId(student_id)})
-                student_details = {
-                    'name': student.name, 
-                    'nickname': student.nickname, 
-                    'user_id': str(student._id), 
-                    'email': student.email, 
-                    'uploaded_photo_url': student.uploaded_photo_url
-                }
-                sessions_list.append({
-                    'session_id': str(session._id), 
-                    'type': session.type_, 
-                    'mentor': mentor_details, 
-                    'student': student_details,
-                    'members': session.members, 
-                    'start_time':session.start_time, 
-                    'status': session.status, 
-                    'active_duration': session.active_duration, 
-                    'end_time': session.end_time,
-                    'user_feedback': session.user_feedback,
-                    'mentor_feedback': session.mentor_feedback,
-                    "user_rating": session.user_rating,
-                    "mentor_rating": session.mentor_rating, 
-                    'category': session.category, 
-                    'created_at': session.created_at, 
-                    'updated_at': session.updated_at
+        for session in Session.objects.raw({'status': {'$in': ["active", "ended"]},'members': {'$all':[user_id]}}):
+            mentor = session.mentor
+            mentor_details = {
+                'name': mentor.name, 
+                'nickname': mentor.nickname, 
+                'user_id': str(mentor._id), 
+                'email': mentor.email, 
+                'uploaded_photo_url': mentor.uploaded_photo_url
+            }
+            student_id = session.members[0]
+            student = User.objects.get({'_id': ObjectId(student_id)})
+            student_details = {
+                'name': student.name, 
+                'nickname': student.nickname, 
+                'user_id': str(student._id), 
+                'email': student.email, 
+                'uploaded_photo_url': student.uploaded_photo_url
+                              }
+            sessions_list.append({
+                'session_id': str(session._id), 
+                'type': session.type_, 
+                'mentor': mentor_details, 
+                'student': student_details,
+                'members': session.members, 
+                'start_time':session.start_time, 
+                'status': session.status, 
+                'active_duration': session.active_duration, 
+                'end_time': session.end_time,
+                'user_feedback': session.user_feedback,
+                'mentor_feedback': session.mentor_feedback,
+                "user_rating": session.user_rating,
+                "mentor_rating": session.mentor_rating, 
+                'category': session.category, 
+                'created_at': session.created_at, 
+                'updated_at': session.updated_at
                 })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
@@ -197,47 +191,44 @@ def get_student_sessions():
 def get_mentor_sessions():
     try:
         user_id = request.get_json()['user_id']
-        User.objects.get({'_id': ObjectId(user_id)})
+        mentor = User.objects.get({'_id': ObjectId(user_id)})
         sessions_list = []
-        for session in Session.objects.all():
-            # code.interact(local=dict(globals(), **locals()))
-            if session.mentor != None:
-                if (user_id == str(session.mentor._id)) and (session.status in ["active", "ended"]):
-                    mentor = session.mentor
-                    mentor_details = {
-                        'name': mentor.name, 
-                        'nickname': mentor.nickname, 
-                        'user_id': str(mentor._id), 
-                        'email': mentor.email, 
-                        'uploaded_photo_url': mentor.uploaded_photo_url
-                    }
-                    student_id = session.members[0]
-                    student = User.objects.get({'_id': ObjectId(student_id)})
-                    student_details = {
-                        'name': student.name, 
-                        'nickname': student.nickname, 
-                        'user_id': str(student._id), 
-                        'email': student.email, 
-                        'uploaded_photo_url': student.uploaded_photo_url
-                    }
-                    sessions_list.append({
-                        'session_id': str(session._id),
-                        'type': session.type_,
-                        'mentor': mentor_details,
-                        'student': student_details,
-                        'members': session.members,
-                        'start_time': session.start_time,
-                        'status': session.status,
-                        'active_duration': session.active_duration,
-                        'end_time': session.end_time,
-                        'user_feedback': session.user_feedback,
-                        'mentor_feedback': session.mentor_feedback,
-                        "user_rating": session.user_rating,
-                        "mentor_rating": session.mentor_rating,
-                        'category': session.category,
-                        'created_at': session.created_at,
-                        'updated_at': session.updated_at
-                    })
+        for session in Session.objects.raw({'status': {'$in':["active", "ended"]}, 'mentor': mentor._id}):
+            mentor = session.mentor
+            mentor_details = {
+                'name': mentor.name, 
+                'nickname': mentor.nickname, 
+                'user_id': str(mentor._id), 
+                'email': mentor.email, 
+                'uploaded_photo_url': mentor.uploaded_photo_url
+            }
+            student_id = session.members[0]
+            student = User.objects.get({'_id': ObjectId(student_id)})
+            student_details = {
+                'name': student.name, 
+                'nickname': student.nickname, 
+                'user_id': str(student._id), 
+                'email': student.email, 
+                'uploaded_photo_url': student.uploaded_photo_url
+            }
+            sessions_list.append({
+                'session_id': str(session._id),
+                'type': session.type_,
+                'mentor': mentor_details,
+                'student': student_details,
+                'members': session.members,
+                'start_time': session.start_time,
+                'status': session.status,
+                'active_duration': session.active_duration,
+                'end_time': session.end_time,
+                'user_feedback': session.user_feedback,
+                'mentor_feedback': session.mentor_feedback,
+                "user_rating": session.user_rating,
+                "mentor_rating": session.mentor_rating,
+                'category': session.category,
+                'created_at': session.created_at,
+                'updated_at': session.updated_at
+            })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
@@ -252,34 +243,33 @@ def get_requested_sessions():
         preferences = mentor.preferences.copy()
         preferences.append('others')
         sessions_list = []
-        for session in Session.objects.all():
+        for session in Session.objects.raw({'status': 'inactive', 'category': {'$in': preferences}}):
             # code.interact(local=dict(globals(), **locals()))
-            if (session.status == "inactive") and (session.category in preferences):
-                student_id = session.members[0]
-                student_obj = User.objects.get({'_id': ObjectId(student_id)})
-                student_details = {
-                    'name': student_obj.nickname,
-                    'user_id': str(student_obj._id),
-                    'email': student_obj.email,
-                    'photo_url': student_obj.uploaded_photo_url
-                }
-                sessions_list.append({
-                    'session_id': str(session._id),
-                    'type': session.type_,
-                    'sender_details': student_details,
-                    'members': session.members,
-                    'start_time': session.start_time,
-                    'status': session.status,
-                    'active_duration': session.active_duration,
-                    'end_time': session.end_time,
-                    'user_feedback': session.user_feedback,
-                    'mentor_feedback': session.mentor_feedback,
-                    "user_rating": session.user_rating,
-                    "mentor_rating": session.mentor_rating,
-                    'category': session.category,
-                    'created_at': session.created_at,
-                    'updated_at': session.updated_at,
-                    'description': session.description
+            student_id = session.members[0]
+            student_obj = User.objects.get({'_id': ObjectId(student_id)})
+            student_details = {
+                'name': student_obj.nickname,
+                'user_id': str(student_obj._id),
+                'email': student_obj.email,
+                'photo_url': student_obj.uploaded_photo_url
+            }
+            sessions_list.append({
+                'session_id': str(session._id),
+                'type': session.type_,
+                'sender_details': student_details,
+                'members': session.members,
+                'start_time': session.start_time,
+                'status': session.status,
+                'active_duration': session.active_duration,
+                'end_time': session.end_time,
+                'user_feedback': session.user_feedback,
+                'mentor_feedback': session.mentor_feedback,
+                "user_rating": session.user_rating,
+                "mentor_rating": session.mentor_rating,
+                'category': session.category,
+                'created_at': session.created_at,
+                'updated_at': session.updated_at,
+                'description': session.description
                 })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
@@ -485,19 +475,18 @@ def update_activity():
 @app.route("/activity", methods=['POST'])
 def get_activity():
     try:
-        activities = Activity.objects.all()
+        user_id = request.get_json()['user_id']
+        activities = Activity.objects.raw({'user_id': user_id})
         user_activities = []
         for activity in activities:
-            if activity.user_id == request.get_json()['user_id']:
-                # code.interact(local=dict(globals(), **locals()))
-                user_activities.append({
-                    'activity_id': str(activity._id), 
-                    'session_id': activity.session_id, 
-                    'is_dynamic': activity.is_dynamic, 
-                    'content': activity.content, 
-                    'user_id': activity.user_id,
-                    'created_at': activity.created_at
-                })
+            user_activities.append({
+                'activity_id': str(activity._id), 
+                'session_id': activity.session_id, 
+                'is_dynamic': activity.is_dynamic, 
+                'content': activity.content, 
+                'user_id': activity.user_id,
+                'created_at': activity.created_at
+            })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
