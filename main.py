@@ -353,7 +353,7 @@ def update_session(action=None):
         # validates if given session id is valid.
         session_ = Session.objects.get({'_id': session_id})
         session = Session.objects.raw({'_id': session_id})
-        socketio.emit('session', {'action': action, 'session_id': update_params['session_id']})
+        socket_params = {'action': action, 'session_id': update_params['session_id'] }
         if action == "start" and session_.status == 'accepted':
             if update_params['student_id']:
                 student = User.objects.get({'_id': ObjectId(update_params['student_id'])})
@@ -363,6 +363,7 @@ def update_session(action=None):
                 raise ValidationError("Student id is required to start a session.")
             session.update({'$set': {"start_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active'}})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "You successfully started a session for " + session_.category + ".", created_at= datetime.datetime.now().isoformat()).save()
+            socket_params.mentor_id = str(session_.mentor._id)
             # code.interact(local=dict(globals(), **locals()))
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now()
@@ -387,6 +388,9 @@ def update_session(action=None):
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
         else:
             raise ValidationError("Presently the session is " + session_.status)
+
+        socketio.emit('session', socket_params)
+
     except Exception as e:
         message = 'Session does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
