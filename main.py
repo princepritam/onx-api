@@ -363,7 +363,7 @@ def update_session(action=None):
                 raise ValidationError("Student id is required to start a session.")
             session.update({'$set': {"start_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active'}})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "You successfully started a session for " + session_.category + ".", created_at= datetime.datetime.now().isoformat()).save()
-            socket_params.mentor_id = str(session_.mentor._id)
+            socket_params["mentor_id"] = str(session_.mentor._id)
             # code.interact(local=dict(globals(), **locals()))
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now()
