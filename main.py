@@ -11,7 +11,10 @@ from bson import ObjectId, errors
 from pymodm.connection import connect
 from pymongo.errors import DuplicateKeyError
 from flask_socketio import SocketIO, emit
-from app.models.models import *
+# from app.api.user import *
+from app.models.message import *
+from app.models.corporate_group import *
+from app.models.activity import *
 import asyncio
 
 deploy = "mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
@@ -28,7 +31,7 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 # Health check
 @app.route("/ping", methods=['GET'])
 def home():
-    return 'hello'
+    return 'Hello! Your app is up and running.'
 
 
 @app.route("/emit", methods=['GET'])
