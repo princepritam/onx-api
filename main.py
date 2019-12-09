@@ -314,7 +314,7 @@ def show_session():
             } if mentor else {},
             'student': {
                 'name': student.name,
-                'nickname': mentor.nickname,
+                'nickname': student.nickname,
                 'user_id': str(student._id),
                 'email': student.email,
                 'uploaded_photo_url': student.uploaded_photo_url
