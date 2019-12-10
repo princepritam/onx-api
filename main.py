@@ -16,6 +16,7 @@ from app.models.message import *
 from app.models.corporate_group import *
 from app.models.activity import *
 import asyncio
+from threading import Timer
 
 deploy = "mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
 # deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
@@ -28,17 +29,12 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'unxunxunx'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+expiry_timer = None
+
 # Health check
 @app.route("/ping", methods=['GET'])
 def home():
     return 'Hello! Your app is up and running.'
-
-
-@app.route("/emit", methods=['GET'])
-def emit():
-    # emit('chat', 'Hi')
-    socketio.emit('chat', 'Hi socketio')
-    return 'done'
 
 # APIs for User
 @app.route("/user/create", methods=['POST'])
@@ -136,11 +132,47 @@ def create_session():
         # code.interact(local=dict(globals(), **locals()))
         Activity(user_id=create_params['members'][0], session_id=str(session._id), is_dynamic=False, content= ("You successfully requested for a new session for " + create_params['category'] + "."), created_at= datetime.datetime.now().isoformat()).save()
         socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
+        
+        time_in_secs = 2*60 # 30mins
+        expiry_timer = Timer(time_in_secs, end_session_on_timer, (session._id, 'kill'))
+        expiry_timer.start()
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
 
+def end_session_on_timer(session_id, action):
+    session = Session.objects.get({'_id': session_id})
+    end_time = datetime.datetime.now()
+
+    if action == 'end':
+        seconds = (end_time - session_.start_time).total_seconds()
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        secs = int(seconds % 60)
+        active_duration = '{}:{}:{}'.format(hours, minutes, secs)
+        session.update({
+            '$set': {
+                "end_time": end_time.isoformat(), 
+                "active_duration": active_duration,
+                "updated_at": end_time.isoformat(), 
+                'status': 'ended'
+            }
+        })
+        Activity(
+            user_id= session.members[0],
+            session_id=str(session._id),
+            is_dynamic= False,
+            content= "Successfully Ended session for " + session.category + ".",
+            created_at= end_time.isoformat()
+        ).save()
+    elif action == 'kill':
+        session.update({
+            '$set': {
+                "updated_at": end_time.isoformat(), 
+                'status': 'lost'
+            }
+        })
 
 @app.route("/sessions/user", methods=['POST'])
 def get_student_sessions():
@@ -364,6 +396,11 @@ def update_session(action=None):
             session.update({'$set': {"start_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active'}})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "You successfully started a session for " + session_.category + ".", created_at= datetime.datetime.now().isoformat()).save()
             socket_params["mentor_id"] = str(session_.mentor._id)
+
+            expiry_timer.cancel()
+            time_in_secs = session_.hours*60*60 
+            expiry_timer = Timer(time_in_secs, end_session_on_timer, (session_._id, 'end'))
+            expiry_timer.start()
             # code.interact(local=dict(globals(), **locals()))
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now()
@@ -375,6 +412,7 @@ def update_session(action=None):
             session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration,
                                      "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "Successfully Ended session for " + session_.category + ".", created_at= datetime.datetime.now().isoformat()).save()
+            expiry_timer.cancel()
         elif action == "accept" and session_.status == 'inactive':
             if update_params['mentor_id']:
                 mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
