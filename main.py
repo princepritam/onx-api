@@ -142,16 +142,16 @@ def create_session():
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
 
 def end_session_on_timer(session_id, action):
-    session = Session.objects.get({'_id': session_id})
+    session = Session.objects.get({'_id': ObjectId(session_id) })
     end_time = datetime.datetime.now()
 
     if action == 'end':
-        seconds = (end_time - session_.start_time).total_seconds()
+        seconds = (end_time - session.start_time).total_seconds()
         hours = int(seconds // 3600)
         minutes = int((seconds % 3600) // 60)
         secs = int(seconds % 60)
         active_duration = '{}:{}:{}'.format(hours, minutes, secs)
-        session.update({
+        Session.objects.raw({'_id': session._id}).update({
             '$set': {
                 "end_time": end_time.isoformat(), 
                 "active_duration": active_duration,
