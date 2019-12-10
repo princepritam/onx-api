@@ -133,7 +133,7 @@ def create_session():
         Activity(user_id=create_params['members'][0], session_id=str(session._id), is_dynamic=False, content= ("You successfully requested for a new session for " + create_params['category'] + "."), created_at= datetime.datetime.now().isoformat()).save()
         socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
         
-        time_in_secs = 2*60 # 30mins
+        time_in_secs = 30*60 # 30mins
         expiry_timer = Timer(time_in_secs, end_session_on_timer, (session._id, 'kill'))
         expiry_timer.start()
     except Exception as e:
