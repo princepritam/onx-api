@@ -175,6 +175,13 @@ def end_session_on_timer(session_id, action):
                 'status': 'lost'
             }
         })
+        Activity(
+            user_id= session.members[0],
+            session_id=str(session._id),
+            is_dynamic= False,
+            content= "Your session request for " + session.category + " expired.",
+            created_at= end_time.isoformat()
+        ).save()
 
 @app.route("/sessions/user", methods=['POST'])
 def get_student_sessions():
