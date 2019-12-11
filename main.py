@@ -461,6 +461,14 @@ def create_message():
         return jsonify({"error": str(e), 'error_status': True}), 200
     return jsonify({'message': 'Successfully created a message.', 'error_status': False}), 201
 
+@app.route("/message/typing", methods=['POST'])
+def typing_message():
+    params = request.get_json()
+    session_id = params['session_id']
+    sender_id = params['sender_id']
+    is_typing = params['is_typing']
+    socketio.emit('chat-' + session_id, { 'type': 'typing', 'sender_id': sender_id, 'is_typing': is_typing })
+
 
 @app.route("/messages", methods=['POST'])
 def get_messages():
