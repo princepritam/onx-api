@@ -468,6 +468,7 @@ def typing_message():
     sender_id = params['sender_id']
     is_typing = params['is_typing']
     socketio.emit('chat-' + session_id, { 'type': 'typing', 'sender_id': sender_id, 'is_typing': is_typing })
+    return jsonify({ 'message': 'Typing status updated'}), 200
 
 
 @app.route("/messages", methods=['POST'])
