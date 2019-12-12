@@ -351,12 +351,14 @@ def show_session():
                 'nickname': mentor.nickname,
                 'user_id': str(mentor._id),
                 'email': mentor.email,
+                'mobile_no': mentor.mobile_no,
                 'uploaded_photo_url': mentor.uploaded_photo_url
             } if mentor else {},
             'student': {
                 'name': student.name,
                 'nickname': student.nickname,
                 'user_id': str(student._id),
+                'mobile_no': student.mobile_no,
                 'email': student.email,
                 'uploaded_photo_url': student.uploaded_photo_url
             } if student else {}
