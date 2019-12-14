@@ -356,6 +356,9 @@ def show_session():
                 'user_id': str(mentor._id),
                 'email': mentor.email,
                 'mobile_no': mentor.mobile_no,
+                'certificates': mentor.certificates,
+                'background': mentor.background,
+                'courses': mentor.courses,
                 'uploaded_photo_url': mentor.uploaded_photo_url
             } if mentor else {},
             'student': {
