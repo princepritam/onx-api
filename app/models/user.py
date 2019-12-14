@@ -3,6 +3,7 @@ from pymodm import MongoModel, fields
 from pymodm.errors import ValidationError
 from bson import ObjectId
 import code
+from app.models.corporate_group import *
 
 # user model
 class User(MongoModel):
@@ -35,7 +36,7 @@ class User(MongoModel):
     def clean(self):
         if self.email != None:
             self.check_duplicate_user()
-        # self.validate_user_group()
+        self.validate_user_group()
 
     def check_duplicate_user(self):
         try:
@@ -46,9 +47,9 @@ class User(MongoModel):
 
     def validate_user_group(self):
         try:
-            code.interact(local=dict(globals(), **locals()))
             if self.user_group != None:
-                CorporateGroup.objects.get({'code': self.user_group})
+                group = CorporateGroup.objects.get({'code': self.user_group})
+                self.user_group = str(group._id)
             else:
                 pass
         except Exception as e:

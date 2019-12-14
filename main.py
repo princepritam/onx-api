@@ -41,22 +41,25 @@ def home():
 def create_user():
     create_params = {}
     try:
-        valid_params = ['name', 'mobile_no', 'role', 'nickname', 'email', 'user_token'
-                        'photo_url', 'preferences', 'user_group', 'uploaded_photo_url', 'background', 'linkedin', 'hours_per_day', 'certificates', 'courses']
+        valid_params = ['name', 'role', 'email', 'user_token', 'photo_url']
         for key, value in request.get_json().items(): # validate update params
             if key in valid_params:
                 create_params[key] = value
         User.from_document(create_params).full_clean(exclude=None)
-        user = User()
-        user.save(force_insert=True)
+        user = User(
+            name=create_params['name'],
+            role=create_params['role'],
+            email=create_params['email'],
+            user_token=create_params['user_token'],
+            photo_url=create_params['photo_url']
+        )
+        user.save(full_clean=True)
         create_params['created_at'] = datetime.datetime.now().isoformat()
         User.objects.raw({'_id': user._id}).update({'$set': create_params})
     except Exception as e:
         if str(e) == 'User with this email already exist':
-            # code.interact(local=dict(globals(), **locals()))
             user_ = User.objects.get({'email': create_params['email']})
             return jsonify({'message': str(e), 'error_status': False, 'mentor_verified': user_.mentor_verified, 'user_id': str(user_._id), 'role': user_.role, 'previously_logged_in': True}), 200
-        # code.interact(local=dict(globals(), **locals()))
         return jsonify({'error': str(e), 'error_status': True}), 200
     return jsonify({'message': 'Successfully created user.', 'user_id': str(user._id), 'error_status': False}), 201
 
@@ -94,9 +97,11 @@ def update_user():
         for key, value in request.get_json().items(): # validate update params
             if key in valid_params:
                 update_params[key] = value
-        user = User.objects.raw({'_id': user_id})
         User.from_document(update_params).full_clean(exclude=None)  # validate update params and raise exception if any
+        user = User.objects.raw({'_id': user_id})
         update_params['updated_at'] = datetime.datetime.now().isoformat()
+        if update_params['user_group'] != None:
+            update_params['user_group'] = str(CorporateGroup.objects.get({'code': update_params['user_group']})._id)
         user.update({'$set': update_params})
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
@@ -328,7 +333,6 @@ def show_session():
         session = Session.objects.get({"_id": session_id})
         mentor = session.mentor
         studentId = session.members[0]
-        # code.interact(local=dict(globals(), **locals()))
         student = User.objects.get({ "_id": ObjectId(studentId) })
         result = {
             'session_id': str(session._id),
@@ -381,7 +385,6 @@ def update_session_():
         Session.from_document(update_params).full_clean(exclude=None)
         update_params['created_at'] = datetime.datetime.now().isoformat()
         Session.objects.raw({'_id': session._id}).update({'$set': update_params})
-        # code.interact(local=dict(globals(), **locals()))
         socketio.emit('session', {'action': 'update', 'session_id': str(session._id)})
     except Exception as e:
         message = 'Session does not exists.' if str(e) == '' else str(e)
@@ -412,7 +415,6 @@ def update_session(action=None):
             time_in_secs = session_.hours*60*60 
             expiry_timer = Timer(time_in_secs, end_session_on_timer, (session_._id, 'end'))
             expiry_timer.start()
-            # code.interact(local=dict(globals(), **locals()))
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now()
             seconds = (end_time - session_.start_time).total_seconds()
@@ -492,17 +494,34 @@ def get_messages():
     return jsonify({'messages': result, 'error_status': False}), 200
 
 # APIs for Corporate Group
-
-
-@app.route("/corporate_group/create", methods=['POST'])
+@app.route("/corporate/create", methods=['POST'])
 def create_corporate_group():
     try:
         params = request.get_json()
-        corporate_group = CorporateGroup(name=params['name'], code=params['code'])
-        corporate_group.save()
+        CorporateGroup(code=params['code'], categories=params['categories']).save(full_clean=True)
     except Exception as e:
         return jsonify({'error': str(e), 'error_status': True}), 404
     return jsonify({'message': "Successfully created group.", "error_status": False}), 201
+
+
+@app.route("/user/corporate", methods=["GET"])
+def get_corporate_for_user():
+    try:
+        user = User.objects.get({'_id': ObjectId(request.get_json()['user_id'])})
+        group = CorporateGroup.objects.get({"_id": ObjectId(user.user_group)})
+        return jsonify({"code": group.code, "categories": group.categories, "id": str(group._id)}), 200
+    except Exception as e:
+        message = 'User does not exists.' if str(e) == '' else str(e)
+        return jsonify({'error': message, 'error_status': True}), 404
+
+@app.route("/corporates", methods=["GET"])
+def get_all_sessions():
+    groups = CorporateGroup.objects.all()
+    data = []
+    for group in groups:
+        data.append({"code": group.code, "categories": group.categories, "id": str(group._id)})
+    return jsonify({"corporates": data}), 200
+
 
 @app.route("/activity/create", methods=['POST'])
 def create_activity():
