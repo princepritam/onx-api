@@ -13,16 +13,14 @@ from pymongo.errors import DuplicateKeyError
 from flask_socketio import SocketIO, emit
 # from app.api.user import *
 from app.models.message import *
-from app.models.corporate_group import *
 from app.models.activity import *
-import asyncio
 from threading import Timer
 
 deploy = "mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
 # deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
 local = "mongodb://localhost:27017/onx"
 
-connect(deploy, alias="onx-app", retryWrites=False)
+connect(local, alias="onx-app", retryWrites=False)
 
 
 app = Flask(__name__)
@@ -45,21 +43,28 @@ def create_user():
         for key, value in request.get_json().items(): # validate update params
             if key in valid_params:
                 create_params[key] = value
-        User.from_document(create_params).full_clean(exclude=None)
+        # User.from_document(create_params).full_clean(exclude=None)
         user = User(
             name=create_params['name'],
             role=create_params['role'],
             email=create_params['email'],
             user_token=create_params['user_token'],
-            photo_url=create_params['photo_url']
+            photo_url=create_params['photo_url'],
+            created_at=datetime.datetime.now().isoformat()
         )
         user.save(full_clean=True)
-        create_params['created_at'] = datetime.datetime.now().isoformat()
-        User.objects.raw({'_id': user._id}).update({'$set': create_params})
+        # create_params['created_at'] = datetime.datetime.now().isoformat()
+        # User.objects.raw({'_id': user._id}).update({'$set': create_params})
     except Exception as e:
         if str(e) == 'User with this email already exist':
             user_ = User.objects.get({'email': create_params['email']})
-            return jsonify({'message': str(e), 'error_status': False, 'mentor_verified': user_.mentor_verified, 'user_id': str(user_._id), 'role': user_.role, 'previously_logged_in': True}), 200
+            return jsonify({
+            'message': str(e),
+            'error_status': False,
+            'mentor_verified': user_.mentor_verified,
+            'user_id': str(user_._id),
+            'role': user_.role,
+            'previously_logged_in': True}), 200
         return jsonify({'error': str(e), 'error_status': True}), 200
     return jsonify({'message': 'Successfully created user.', 'user_id': str(user._id), 'error_status': False}), 201
 
@@ -68,8 +73,21 @@ def create_user():
 def get_all_users():
     users_list = []
     for user in User.objects.all():
-        users_list.append({'user_id': str(user._id), 'name': user.name, 'email': user.email,
-                           'mobile_no': user.mobile_no, 'nickname': user.nickname, 'role': user.role, 'preferences': user.preferences, 'mentor_verified': user.mentor_verified, 'user_group': user.user_group, 'photo_url': user.photo_url, 'created_at': user.created_at, 'updated_at': user.updated_at, 'user_token': user.user_token, 'uploaded_photo_url': user.uploaded_photo_url})
+        users_list.append({
+        'user_id': str(user._id),
+        'name': user.name,
+        'email': user.email,
+        'mobile_no': user.mobile_no,
+        'nickname': user.nickname,
+        'role': user.role,
+        'preferences': user.preferences,
+        'mentor_verified': user.mentor_verified,
+        'user_group': user.user_group,
+        'photo_url': user.photo_url,
+        'created_at': user.created_at,
+        'updated_at': user.updated_at,
+        'user_token': user.user_token,
+        'uploaded_photo_url': user.uploaded_photo_url})
     return jsonify({"users": users_list}), 200
 
 
@@ -78,8 +96,21 @@ def show_user():
     try:
         user_id = ObjectId(request.get_json()['user_id'])
         user = User.objects.get({'_id': user_id})
-        return jsonify({'user_id': str(user._id), 'name': user.name, 'email': user.email,
-                        'mobile_no': user.mobile_no, 'role': user.role, 'nickname': user.nickname, 'preferences': user.preferences, 'mentor_verified': user.mentor_verified, 'user_group': user.user_group, 'photo_url': user.photo_url, 'created_at': user.created_at, 'updated_at': user.updated_at, 'user_token': user.user_token, 'uploaded_photo_url': user.uploaded_photo_url}), 200
+        return jsonify({
+            'user_id': str(user._id),
+            'name': user.name,
+            'email': user.email,
+            'mobile_no': user.mobile_no,
+            'role': user.role,
+            'nickname': user.nickname,
+            'preferences': user.preferences,
+            'mentor_verified': user.mentor_verified,
+            'user_group': user.user_group,
+            'photo_url': user.photo_url,
+            'created_at': user.created_at,
+            'updated_at': user.updated_at,
+            'user_token': user.user_token,
+            'uploaded_photo_url': user.uploaded_photo_url}), 200
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
@@ -93,7 +124,9 @@ def update_user():
         User.objects.get({'_id': user_id})
         update_params = {}
         valid_params = ['name', 'mobile_no', 'role', 'nickname',
-                        'photo_url', 'preferences', 'user_group', 'mentor_verified', 'uploaded_photo_url', 'background', 'linkedin', 'hours_per_day', 'certificates', 'courses']
+                        'photo_url', 'preferences', 'user_group', 
+                        'mentor_verified', 'uploaded_photo_url', 
+                        'background', 'linkedin', 'hours_per_day', 'certificates', 'courses']
         for key, value in request.get_json().items(): # validate update params
             if key in valid_params:
                 update_params[key] = value
@@ -135,7 +168,12 @@ def create_session():
         create_params['created_at'] = datetime.datetime.now().isoformat()
         Session.objects.raw({'_id': session._id}).update({'$set': create_params})
         # code.interact(local=dict(globals(), **locals()))
-        Activity(user_id=create_params['members'][0], session_id=str(session._id), is_dynamic=False, content= ("You successfully requested for a new session for " + create_params['category'] + "."), created_at= datetime.datetime.now().isoformat()).save()
+        Activity(
+            user_id=create_params['members'][0],
+            session_id=str(session._id),
+            is_dynamic=False,
+            content= ("You successfully requested for a new session for " + create_params['category'] + "."),
+            created_at= datetime.datetime.now().isoformat()).save()
         socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
         
         time_in_secs = 30*60 # 30mins
@@ -447,10 +485,6 @@ def update_session(action=None):
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully updated session.', 'error_status': False}), 202
 
-async def end_session_after(hours):
-    await asyncio.sleep(hours*20)
-    update_session("end")
-
 # APIs for Message
 @app.route("/message/create", methods=['POST'])
 def create_message():
@@ -578,5 +612,5 @@ def get_activity():
 
 
 if __name__ == '__main__':
-    socketio.run(app)
-    # app.run(port=3000, debug=True, host='localhost')
+    # socketio.run(app)
+    app.run(port=3000, debug=True, host='localhost')
