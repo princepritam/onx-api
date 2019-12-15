@@ -141,6 +141,10 @@ def update_user():
             update_params['user_group'] = str(CorporateGroup.objects.get({'code': update_params['user_group']})._id)
         user.update({'$set': update_params})
     except Exception as e:
+        if str(e) == "'user_group'":
+            user.update({'$set': update_params})
+            return jsonify({'message': 'User updated successfully.', 'error_status': False}), 202
+        # code.interact(local=dict(globals(), **locals()))
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 422
     return jsonify({'message': 'User updated successfully.', 'error_status': False}), 202
