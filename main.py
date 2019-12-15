@@ -20,7 +20,7 @@ deploy = "mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
 # deploy="mongodb://heroku_mjkv6v40:osce9dakl9glgd4750cuovm8h1@ds241258.mlab.com:41258/heroku_mjkv6v40"
 local = "mongodb://localhost:27017/onx"
 
-connect(local, alias="onx-app", retryWrites=False)
+connect(deploy, alias="onx-app", retryWrites=False)
 
 
 app = Flask(__name__)
@@ -43,7 +43,6 @@ def create_user():
         for key, value in request.get_json().items(): # validate update params
             if key in valid_params:
                 create_params[key] = value
-        # User.from_document(create_params).full_clean(exclude=None)
         user = User(
             name=create_params['name'],
             role=create_params['role'],
@@ -53,8 +52,6 @@ def create_user():
             created_at=datetime.datetime.now().isoformat()
         )
         user.save(full_clean=True)
-        # create_params['created_at'] = datetime.datetime.now().isoformat()
-        # User.objects.raw({'_id': user._id}).update({'$set': create_params})
     except Exception as e:
         if str(e) == 'User with this email already exist':
             user_ = User.objects.get({'email': create_params['email']})
@@ -612,5 +609,5 @@ def get_activity():
 
 
 if __name__ == '__main__':
-    # socketio.run(app)
-    app.run(port=3000, debug=True, host='localhost')
+    socketio.run(app)
+    # app.run(port=3000, debug=True, host='localhost')
