@@ -622,6 +622,10 @@ def get_activity():
     return jsonify({"activities": user_activities}), 200
 
 
+@socketio.on('custom')
+def handle_my_custom_event(json):
+    socketio.emit('custom', json)
+
 if __name__ == '__main__':
     socketio.run(app)
     # app.run(port=3000, debug=True, host='localhost')
