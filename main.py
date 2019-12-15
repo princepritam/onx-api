@@ -71,6 +71,9 @@ def create_user():
 def get_all_users():
     users_list = []
     for user in User.objects.all():
+        user_group = None
+        if user.user_group != None:
+            user_group = CorporateGroup.objects.get({"_id": ObjectId(user.user_group)}).code
         users_list.append({
         'user_id': str(user._id),
         'name': user.name,
@@ -80,7 +83,7 @@ def get_all_users():
         'role': user.role,
         'preferences': user.preferences,
         'mentor_verified': user.mentor_verified,
-        'user_group': CorporateGroup.objects.get({"_id": ObjectId(user.user_group)}).code,
+        'user_group': user_group,
         'photo_url': user.photo_url,
         'created_at': user.created_at,
         'updated_at': user.updated_at,
@@ -94,6 +97,9 @@ def show_user():
     try:
         user_id = ObjectId(request.get_json()['user_id'])
         user = User.objects.get({'_id': user_id})
+        user_group = None
+        if user.user_group != None:
+            user_group = CorporateGroup.objects.get({"_id": ObjectId(user.user_group)}).code
         return jsonify({
             'user_id': str(user._id),
             'name': user.name,
@@ -103,7 +109,7 @@ def show_user():
             'nickname': user.nickname,
             'preferences': user.preferences,
             'mentor_verified': user.mentor_verified,
-            'user_group': CorporateGroup.objects.get({"_id": ObjectId(user.user_group)}).code,
+            'user_group': user_group,
             'photo_url': user.photo_url,
             'created_at': user.created_at,
             'updated_at': user.updated_at,
