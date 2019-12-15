@@ -142,7 +142,7 @@ def update_user():
         user.update({'$set': update_params})
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
-        return jsonify({'error': message, 'error_status': True}), 200
+        return jsonify({'error': message, 'error_status': True}), 422
     return jsonify({'message': 'User updated successfully.', 'error_status': False}), 202
 
 
