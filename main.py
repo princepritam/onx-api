@@ -13,6 +13,7 @@ from pymongo.errors import DuplicateKeyError
 from flask_socketio import SocketIO, emit
 # from app.api.user import *
 from app.models.message import *
+from app.models.corporate_group import *
 from app.models.activity import *
 from threading import Timer
 
@@ -79,7 +80,7 @@ def get_all_users():
         'role': user.role,
         'preferences': user.preferences,
         'mentor_verified': user.mentor_verified,
-        'user_group': user.user_group,
+        'user_group': CorporateGroup.objects.get({"_id": ObjectId(user.user_group)}).code,
         'photo_url': user.photo_url,
         'created_at': user.created_at,
         'updated_at': user.updated_at,
@@ -102,7 +103,7 @@ def show_user():
             'nickname': user.nickname,
             'preferences': user.preferences,
             'mentor_verified': user.mentor_verified,
-            'user_group': user.user_group,
+            'user_group': CorporateGroup.objects.get({"_id": ObjectId(user.user_group)}).code,
             'photo_url': user.photo_url,
             'created_at': user.created_at,
             'updated_at': user.updated_at,
