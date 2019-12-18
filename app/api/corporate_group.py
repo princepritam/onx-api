@@ -3,6 +3,7 @@ import datetime
 from flask import Blueprint, Flask, request, jsonify
 from bson import ObjectId, errors
 from pymongo.errors import DuplicateKeyError
+from app.models.corporate_group import *
 
 main = Blueprint('corporate_group', __name__)
 
