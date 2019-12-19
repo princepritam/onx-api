@@ -4,6 +4,7 @@ from flask import Blueprint, Flask, request, jsonify
 from bson import ObjectId, errors
 from pymongo.errors import DuplicateKeyError
 from app.models.user import *
+from app.models.corporate_group import *
 
 main = Blueprint('user', __name__)
 
