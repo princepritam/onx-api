@@ -17,7 +17,7 @@ def create_corporate_group():
     return jsonify({'message': "Successfully created group.", "error_status": False}), 201
 
 
-@main.route("/user/corporate", methods=["GET"])
+@main.route("/user/corporate", methods=["POST"])
 def get_corporate_for_user():
     try:
         user = User.objects.get({'_id': ObjectId(request.get_json()['user_id'])})
