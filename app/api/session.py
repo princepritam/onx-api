@@ -36,7 +36,7 @@ def create_session():
             created_at= datetime.datetime.now().isoformat()).save()
         socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
         
-        time_in_secs = 30*60 # 30mins
+        time_in_secs = 60 # 30mins
         expiry_timer = Timer(time_in_secs, end_session_on_timer, (session._id, 'kill'))
         expiry_timer.start()
     except Exception as e:
@@ -312,7 +312,7 @@ def update_session(action=None):
             socket_params["mentor_id"] = str(session_.mentor._id)
 
             expiry_timer.cancel()
-            time_in_secs = 1*60*60 
+            time_in_secs = 120 
             session_expiry_timer = Timer(time_in_secs, end_session_on_timer, (session_._id, 'end'))
             session_expiry_timer.start()
         elif action == "end" and session_.status == 'active':
