@@ -194,10 +194,10 @@ def get_requested_sessions():
             student_id = session.members[0]
             student_obj = User.objects.get({'_id': ObjectId(student_id)})
             student_details = {
-                'name': student_obj.nickname,
+                'nickname': student_obj.nickname,
                 'user_id': str(student_obj._id),
                 'email': student_obj.email,
-                'photo_url': student_obj.uploaded_photo_url
+                'uploaded_photo_url': student_obj.uploaded_photo_url
             }
             sessions_list.append({
                 'session_id': str(session._id),
