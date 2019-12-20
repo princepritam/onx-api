@@ -202,7 +202,7 @@ def get_requested_sessions():
             sessions_list.append({
                 'session_id': str(session._id),
                 'type': session.type_,
-                'sender_details': student_details,
+                'student_details': student_details,
                 'members': session.members,
                 'start_time': session.start_time,
                 'status': session.status,
