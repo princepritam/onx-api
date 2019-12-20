@@ -1,13 +1,10 @@
 # APIs for Message
 import datetime
-from flask import Blueprint, Flask, request, jsonify
+from flask import Blueprint, request, jsonify
 from bson import ObjectId, errors
-from flask_socketio import SocketIO, emit
 from pymongo.errors import DuplicateKeyError
 from app.models.message import *
-
-app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")
+from . import app, socketio, emit
 
 main = Blueprint('message', __name__)
 

@@ -1,16 +1,12 @@
 # APIs for Session
 import datetime
-from flask import Blueprint, Flask, request, jsonify
+from flask import Blueprint, request, jsonify
 from bson import ObjectId, errors
 from pymongo.errors import DuplicateKeyError
-from flask_socketio import SocketIO, emit
-from app.models.user import *
 from app.models.session import *
 from app.models.activity import *
 from threading import Timer
-
-app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")
+from . import app, socketio, emit
 
 main = Blueprint('session', __name__)
 

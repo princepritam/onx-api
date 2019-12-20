@@ -2,6 +2,7 @@ from pymongo.write_concern import WriteConcern
 from pymodm import MongoModel, fields
 from pymodm.errors import ValidationError
 from bson import ObjectId
+from app.models.user import *
 import code
 
 class Activity(MongoModel):

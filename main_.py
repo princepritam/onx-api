@@ -1,4 +1,3 @@
-from flask import Blueprint, Flask, request, jsonify
 from pymodm.connection import connect
 from app import app, socketio
 
@@ -15,5 +14,5 @@ def home():
     return 'Hello! Your app is up and running.'
 
 if __name__ == '__main__':
-    # socketio.run(app)
-    app.run(port=3000, debug=True, host='localhost')
+    socketio.run(app)
+    # app.run(port=3000, debug=True, host='localhost')
