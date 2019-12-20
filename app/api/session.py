@@ -17,6 +17,7 @@ session_expiry_timer = None
 def create_session():
     create_params = {}
     try:
+        global expiry_timer
         valid_params = ['type', 'members', 'category', 'hours', 'description']
         for key, val in request.get_json().items():
             if key in valid_params:
@@ -291,6 +292,8 @@ def update_session_():
 @main.route("/session/update/<string:action>", methods=['PATCH'])
 def update_session(action=None):
     try:
+        global expiry_timer
+        global session_expiry_timer
         update_params = request.get_json()
         session_id = ObjectId(update_params['session_id'])
         # validates if given session id is valid.
@@ -309,7 +312,7 @@ def update_session(action=None):
             socket_params["mentor_id"] = str(session_.mentor._id)
 
             expiry_timer.cancel()
-            time_in_secs = session_.hours*60*60 
+            time_in_secs = 1*60*60 
             session_expiry_timer = Timer(time_in_secs, end_session_on_timer, (session_._id, 'end'))
             session_expiry_timer.start()
         elif action == "end" and session_.status == 'active':
@@ -319,10 +322,10 @@ def update_session(action=None):
             minutes = int((seconds % 3600) // 60)
             secs = int(seconds % 60)
             active_duration = '{}:{}:{}'.format(hours, minutes, secs)
+            session_expiry_timer.cancel()
             session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration,
                                      "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "Successfully Ended session for " + session_.category + ".", created_at= datetime.datetime.now().isoformat()).save()
-            session_expiry_timer.cancel()
         elif action == "accept" and session_.status == 'inactive':
             if update_params['mentor_id']:
                 mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
@@ -336,7 +339,6 @@ def update_session(action=None):
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
         else:
             raise ValidationError("Presently the session is " + session_.status)
-
         socketio.emit('session', socket_params)
 
     except Exception as e:
