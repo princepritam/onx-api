@@ -326,6 +326,8 @@ def update_session(action=None):
             session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration,
                                      "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "Successfully Ended session for " + session_.category + ".", created_at= datetime.datetime.now().isoformat()).save()
+            student_id = session_.members[0]
+            socket_params["student_id"] = str(student_id)
         elif action == "accept" and session_.status == 'inactive':
             if update_params['mentor_id']:
                 mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
