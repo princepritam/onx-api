@@ -130,3 +130,5 @@ def delete_user():
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'User deleted from database.', 'error_status': False}), 202
+
+# @main.route("/user/update/corporate", methods=[""])

@@ -1,5 +1,5 @@
 # APIs for Session
-import datetime
+import datetime, code
 from flask import Blueprint, request, jsonify
 from bson import ObjectId, errors
 from pymongo.errors import DuplicateKeyError
@@ -11,6 +11,7 @@ from . import app, socketio, emit
 main = Blueprint('session', __name__)
 
 expiry_timer = None
+session_expiry_timer = None
 
 @main.route("/session/create", methods=['POST'])
 def create_session():
@@ -309,8 +310,8 @@ def update_session(action=None):
 
             expiry_timer.cancel()
             time_in_secs = session_.hours*60*60 
-            expiry_timer = Timer(time_in_secs, end_session_on_timer, (session_._id, 'end'))
-            expiry_timer.start()
+            session_expiry_timer = Timer(time_in_secs, end_session_on_timer, (session_._id, 'end'))
+            session_expiry_timer.start()
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now()
             seconds = (end_time - session_.start_time).total_seconds()
@@ -321,7 +322,7 @@ def update_session(action=None):
             session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration,
                                      "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "Successfully Ended session for " + session_.category + ".", created_at= datetime.datetime.now().isoformat()).save()
-            expiry_timer.cancel()
+            session_expiry_timer.cancel()
         elif action == "accept" and session_.status == 'inactive':
             if update_params['mentor_id']:
                 mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
