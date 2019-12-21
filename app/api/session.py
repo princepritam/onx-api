@@ -10,14 +10,14 @@ from . import app, socketio, emit
 
 main = Blueprint('session', __name__)
 
-expiry_timer = None
+request_expiry_timer = None
 session_expiry_timer = None
 
 @main.route("/session/create", methods=['POST'])
 def create_session():
     create_params = {}
     try:
-        global expiry_timer
+        global request_expiry_timer
         valid_params = ['type', 'members', 'category', 'hours', 'description']
         for key, val in request.get_json().items():
             if key in valid_params:
@@ -37,12 +37,51 @@ def create_session():
         socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
         
         time_in_secs = 30*60 # 30mins
-        expiry_timer = Timer(time_in_secs, end_session_on_timer, (session._id, 'kill'))
-        expiry_timer.start()
+        request_expiry_timer = Timer(time_in_secs, end_session_on_timer, (session._id, 'kill'))
+        request_expiry_timer.start()
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
+
+
+@main.route("/session/schedule", methods=['POST'])
+def create_session():
+    create_params = {}
+    try:
+        params = request.get_json()
+        session_id = params['session_id']
+        scheduled_time = params['scheduled_time']
+        session_obj = Session.objects.get({'_id': ObjectId(session_id) })
+        current_time = datetime.datetime.now().isoformat()
+        new_session_document = {
+            'type': session_obj['type'],
+            'members': session_obj['members'],
+            'category': session_obj['category'],
+            'created_at': current_time,
+            'status': 'scheduled_inactive',
+            'scheduled_time': scheduled_time
+        }
+        Session.from_document(new_session_document).full_clean(exclude=None)
+        session = Session()
+        session.save(force_insert=True)
+        Session.objects.raw({'_id': session._id}).update({'$set': new_session_document})
+
+        Activity(
+            user_id=session_obj['members'][0],
+            session_id=str(session._id),
+            is_dynamic=True,
+            content=("You successfully requested for a new session for " + create_params['category'] + "."),
+            created_at= current_time
+        ).save()
+
+        socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
+        
+    except Exception as e:
+        message = 'User does not exists.' if str(e) == '' else str(e)
+        return jsonify({'error': message, 'error_status': True}), 200
+    return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
+
 
 def end_session_on_timer(session_id, action):
     session_object_id = ObjectId(session_id)
@@ -109,7 +148,7 @@ def get_student_sessions():
                 'user_id': str(student._id), 
                 'email': student.email, 
                 'uploaded_photo_url': student.uploaded_photo_url
-                              }
+            }
             sessions_list.append({
                 'session_id': str(session._id), 
                 'type': session.type_, 
@@ -127,7 +166,7 @@ def get_student_sessions():
                 'category': session.category, 
                 'created_at': session.created_at, 
                 'updated_at': session.updated_at
-                })
+            })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
@@ -190,7 +229,7 @@ def get_requested_sessions():
         preferences = mentor.preferences.copy()
         preferences.append('others')
         sessions_list = []
-        for session in Session.objects.raw({'status': 'inactive', 'category': {'$in': preferences}}):
+        for session in Session.objects.raw({'status': {'$in':['inactive', 'scheduled_inactive']}, 'category': {'$in': preferences}}):
             # code.interact(local=dict(globals(), **locals()))
             student_id = session.members[0]
             student_obj = User.objects.get({'_id': ObjectId(student_id)})
@@ -207,17 +246,11 @@ def get_requested_sessions():
                 'members': session.members,
                 'start_time': session.start_time,
                 'status': session.status,
-                'active_duration': session.active_duration,
-                'end_time': session.end_time,
-                'user_feedback': session.user_feedback,
-                'mentor_feedback': session.mentor_feedback,
-                "user_rating": session.user_rating,
-                "mentor_rating": session.mentor_rating,
                 'category': session.category,
                 'created_at': session.created_at,
                 'updated_at': session.updated_at,
                 'description': session.description
-                })
+            })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
@@ -292,7 +325,7 @@ def update_session_():
 @main.route("/session/update/<string:action>", methods=['PATCH'])
 def update_session(action=None):
     try:
-        global expiry_timer
+        global request_expiry_timer
         global session_expiry_timer
         update_params = request.get_json()
         session_id = ObjectId(update_params['session_id'])
@@ -311,8 +344,8 @@ def update_session(action=None):
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "You successfully started a session for " + session_.category + ".", created_at= datetime.datetime.now().isoformat()).save()
             socket_params["mentor_id"] = str(session_.mentor._id)
 
-            expiry_timer.cancel()
-            time_in_secs = 1*60*60 
+            request_expiry_timer.cancel()
+            time_in_secs = 1*60*60  # 1 hour
             session_expiry_timer = Timer(time_in_secs, end_session_on_timer, (session_._id, 'end'))
             session_expiry_timer.start()
         elif action == "end" and session_.status == 'active':
@@ -339,6 +372,8 @@ def update_session(action=None):
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= True, content= (mentor.name + " accepted your session for " + session_.category + "."), created_at= datetime.datetime.now().isoformat()).save()
         elif action == "kill" and session_.status == 'inactive':
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
+        elif action == "schedule" and session_.status == 'scheduled_inactive':
+            session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'scheduled_active'}})
         else:
             raise ValidationError("Presently the session is " + session_.status)
         socketio.emit('session', socket_params)

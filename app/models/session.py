@@ -44,6 +44,7 @@ class Session(MongoModel):
     mentor_rating = fields.IntegerField(mongo_name='mentor_rating')
     created_at = fields.DateTimeField(required=False, mongo_name='created_at')
     updated_at = fields.DateTimeField(mongo_name='updated_at')
+    scheduled_time = fields.DateTimeField(required=False, mongo_name='scheduled_time')
 
     class Meta:
         write_concern = WriteConcern(j=True)
