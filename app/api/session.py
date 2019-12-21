@@ -371,6 +371,7 @@ def update_session(action=None):
             
             student_id = session_.members[0]
             socket_params["student_id"] = str(student_id)
+            socket_params["mentor_id"] = str(session_.mentor._id)
         elif action == "accept" and session_.status == 'inactive':
             if update_params['mentor_id']:
                 mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
@@ -380,6 +381,9 @@ def update_session(action=None):
                 raise ValidationError("Mentor id is required to accept a session.")
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'accepted', "mentor": mentor._id}})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= True, content= (mentor.name + " accepted your session for " + session_.category + "."), created_at= datetime.datetime.now().isoformat()).save()
+                        
+            student_id = session_.members[0]
+            socket_params["student_id"] = str(student_id)
         elif action == "kill" and session_.status == 'inactive':
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
         elif action == "schedule" and session_.status == 'scheduled_inactive':
