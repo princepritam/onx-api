@@ -48,7 +48,7 @@ def create_session():
 
 
 @main.route("/session/schedule", methods=['POST'])
-def create_session():
+def schedule_session():
     create_params = {}
     try:
         params = request.get_json()
