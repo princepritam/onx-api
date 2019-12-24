@@ -10,14 +10,14 @@ from . import app, socketio, emit, celery
 
 main = Blueprint('session', __name__)
 
-request_expiry_timer_map = {}
-session_expiry_timer_map = {}
+# request_expiry_timer_map = {}
+# session_expiry_timer_map = {}
 
 @main.route("/session/create", methods=['POST'])
 def create_session():
     create_params = {}
     try:
-        global request_expiry_timer_map
+        # global request_expiry_timer_map
         valid_params = ['type', 'members', 'category', 'hours', 'description']
         for key, val in request.get_json().items():
             if key in valid_params:
@@ -36,11 +36,11 @@ def create_session():
             created_at= datetime.datetime.now().isoformat()).save()
         socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
         
-        time_in_secs = 30*60 # 30mins
-        request_expiry_timer = Timer(time_in_secs, end_session_on_timer, (session._id, 'kill'))
-        request_expiry_timer.start()
+        # time_in_secs = 30*60 # 30mins
+        # request_expiry_timer = Timer(time_in_secs, end_session_on_timer, (session._id, 'kill'))
+        # request_expiry_timer.start()
 
-        request_expiry_timer_map[str(session._id)] = request_expiry_timer
+        # request_expiry_timer_map[str(session._id)] = request_expiry_timer
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
@@ -366,8 +366,8 @@ def update_session_():
 @main.route("/session/update/<string:action>", methods=['PATCH'])
 def update_session(action=None):
     try:
-        global request_expiry_timer_map
-        global session_expiry_timer_map
+        # global request_expiry_timer_map
+        # global session_expiry_timer_map
         update_params = request.get_json()
         session_id = ObjectId(update_params['session_id'])
         # validates if given session id is valid.
@@ -385,14 +385,14 @@ def update_session(action=None):
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "You successfully started a session for " + session_.category + ".", created_at= datetime.datetime.now().isoformat()).save()
             socket_params["mentor_id"] = str(session_.mentor._id)
 
-            expiry_timer = request_expiry_timer_map[update_params['session_id']]
-            expiry_timer.cancel()
+            # expiry_timer = request_expiry_timer_map[update_params['session_id']]
+            # expiry_timer.cancel()
 
-            time_in_secs = 1*60*60  # 1 hour
-            session_expiry_timer = Timer(time_in_secs, end_session_on_timer, (session_._id, 'end'))
-            session_expiry_timer.start()
+            # time_in_secs = 1*60*60  # 1 hour
+            # session_expiry_timer = Timer(time_in_secs, end_session_on_timer, (session_._id, 'end'))
+            # session_expiry_timer.start()
 
-            session_expiry_timer_map[update_params['session_id']] = session_expiry_timer
+            # session_expiry_timer_map[update_params['session_id']] = session_expiry_timer
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now()
             seconds = (end_time - session_.start_time).total_seconds()
@@ -401,8 +401,8 @@ def update_session(action=None):
             secs = int(seconds % 60)
             active_duration = '{}:{}:{}'.format(hours, minutes, secs)
 
-            expiry_timer = session_expiry_timer_map[update_params['session_id']]
-            expiry_timer.cancel()
+            # expiry_timer = session_expiry_timer_map[update_params['session_id']]
+            # expiry_timer.cancel()
 
             session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration,
                                      "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
