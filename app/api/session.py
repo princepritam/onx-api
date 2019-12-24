@@ -89,7 +89,7 @@ def run_celery():
     task = test_celery.apply_async(countdown=10)
     return jsonify({"Task ID": task.id, "status": task.state})
 
-@app.route('/status/<task_id>')
+@main.route('/status/<task_id>')
 def taskstatus(task_id):
     task = test_celery.AsyncResult(task_id)
     if task.state == 'PENDING':
