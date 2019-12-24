@@ -17,6 +17,7 @@ def create_message():
                           content=create_params['content'], type_=create_params['type'], created_at=create_params['created_at'])
         message.save()
         socketio.emit('chat-' + create_params['session_id'], create_params)
+        create_params['sessage_id'] = str(message._id)
         socketio.emit('chat', create_params)
     except Exception as e:
         return jsonify({"error": str(e), 'error_status': True}), 200
