@@ -1,2 +1,2 @@
 web: gunicorn --worker-class eventlet -w 1 main:app
-worker: celery worker --app=main:celery.app
+worker: celery -A main:celery worker
