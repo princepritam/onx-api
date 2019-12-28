@@ -374,15 +374,29 @@ def update_session(action=None):
         session_ = Session.objects.get({'_id': session_id})
         session = Session.objects.raw({'_id': session_id})
         socket_params = {'action': action, 'session_id': update_params['session_id'] }
-        if action == "start" and session_.status == 'accepted':
+        if action == "start" and session_.status in ['accepted', 'active']:
             if update_params['student_id']:
                 student = User.objects.get({'_id': ObjectId(update_params['student_id'])})
                 if student.role != "student":
                     raise ValidationError("Given mentor id is incorrect, role of the user is not 'student'.")
             else:
                 raise ValidationError("Student id is required to start a session.")
-            session.update({'$set': {"start_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active'}})
-            Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "You successfully started a session for " + session_.category + ".", created_at= datetime.datetime.now().isoformat()).save()
+            student_updater = User.objects.raw({'_id': ObjectId(update_params['student_id'])})
+            mentor_updater = User.objects.raw({'_id': session_.mentor._id})
+            student_sessions = student.sessions + 1
+            mentor_sessions = session_.mentor.sessions + 1
+            student_updater.update({'$set':{"sessions": student_sessions}})
+            mentor_updater.update({'$set':{"sessions": mentor_sessions}})
+            session.update({'$set': {
+                                "start_time": datetime.datetime.now().isoformat(),
+                                "updated_at": datetime.datetime.now().isoformat(),
+                                'status': 'active'}})
+            Activity(
+                user_id= session_.members[0],
+                session_id=str(session_._id),
+                is_dynamic= False,
+                content= "You successfully started a session for " + session_.category + ".",
+                created_at= datetime.datetime.now().isoformat()).save()
             socket_params["mentor_id"] = str(session_.mentor._id)
 
             expiry_timer = request_expiry_timer_map[update_params['session_id']]
