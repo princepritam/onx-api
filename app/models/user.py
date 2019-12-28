@@ -26,6 +26,7 @@ class User(MongoModel):
     mentor_verified = fields.BooleanField(mongo_name='mentor_verified', default=False)
     hours_per_day = fields.CharField(mongo_name='hours_per_day')
     login_status = fields.BooleanField(mongo_name='login_status', default=True)
+    sessions = fields.BigIntegerField(mongo_name='sessions', default=0)
 
     class Meta:
         write_concern = WriteConcern(j=True)

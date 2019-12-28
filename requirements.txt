@@ -17,3 +17,5 @@ python-socketio==4.3.1
 six==1.13.0
 virtualenv==16.7.7
 Werkzeug==0.16.0
+celery==4.3.0
+redis==3.2.1

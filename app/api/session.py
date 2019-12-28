@@ -6,7 +6,7 @@ from pymongo.errors import DuplicateKeyError
 from app.models.session import *
 from app.models.activity import *
 from threading import Timer
-from . import app, socketio, emit
+from . import app, socketio, emit, celery
 
 main = Blueprint('session', __name__)
 
@@ -84,6 +84,45 @@ def schedule_session():
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
 
+@main.route("/session/celery")
+def run_celery():
+    task = test_celery.apply_async(countdown=10)
+    return jsonify({"Task ID": task.id, "status": task.state})
+
+@main.route('/status/<task_id>')
+def taskstatus(task_id):
+    task = test_celery.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        # job did not start yet
+        response = {
+            'state': task.state,
+            'current': 0,
+            'total': 1,
+            'status': 'Pending...'
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'state': task.state,
+            'current': task.info.get('current', 0),
+            'total': task.info.get('total', 1),
+            'status': task.info.get('status', '')
+        }
+        if 'result' in task.info:
+            response['result'] = task.info['result']
+    else:
+        # something went wrong in the background job
+        response = {
+            'state': task.state,
+            'current': 1,
+            'total': 1,
+            'status': str(task.info),  # this is the exception raised
+        }
+    return jsonify(response)
+
+@celery.task
+def test_celery():
+    session = Session().save()
+    return str(session._id)
 
 def end_session_on_timer(session_id, action):
     session_object_id = ObjectId(session_id)
@@ -335,15 +374,29 @@ def update_session(action=None):
         session_ = Session.objects.get({'_id': session_id})
         session = Session.objects.raw({'_id': session_id})
         socket_params = {'action': action, 'session_id': update_params['session_id'] }
-        if action == "start" and session_.status == 'accepted':
+        if action == "start" and session_.status in ['accepted', 'active']:
             if update_params['student_id']:
                 student = User.objects.get({'_id': ObjectId(update_params['student_id'])})
                 if student.role != "student":
                     raise ValidationError("Given mentor id is incorrect, role of the user is not 'student'.")
             else:
                 raise ValidationError("Student id is required to start a session.")
-            session.update({'$set': {"start_time": datetime.datetime.now().isoformat(), "updated_at": datetime.datetime.now().isoformat(), 'status': 'active'}})
-            Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "You successfully started a session for " + session_.category + ".", created_at= datetime.datetime.now().isoformat()).save()
+            student_updater = User.objects.raw({'_id': ObjectId(update_params['student_id'])})
+            mentor_updater = User.objects.raw({'_id': session_.mentor._id})
+            student_sessions = student.sessions + 1
+            mentor_sessions = session_.mentor.sessions + 1
+            student_updater.update({'$set':{"sessions": student_sessions}})
+            mentor_updater.update({'$set':{"sessions": mentor_sessions}})
+            session.update({'$set': {
+                                "start_time": datetime.datetime.now().isoformat(),
+                                "updated_at": datetime.datetime.now().isoformat(),
+                                'status': 'active'}})
+            Activity(
+                user_id= session_.members[0],
+                session_id=str(session_._id),
+                is_dynamic= False,
+                content= "You successfully started a session for " + session_.category + ".",
+                created_at= datetime.datetime.now().isoformat()).save()
             socket_params["mentor_id"] = str(session_.mentor._id)
 
             # expiry_timer = request_expiry_timer_map[update_params['session_id']]

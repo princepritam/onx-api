@@ -59,7 +59,8 @@ def get_all_users():
         'created_at': user.created_at,
         'updated_at': user.updated_at,
         'user_token': user.user_token,
-        'uploaded_photo_url': user.uploaded_photo_url})
+        'uploaded_photo_url': user.uploaded_photo_url,
+        "sessions": user.sessions})
     return jsonify({"users": users_list}), 200
 
 
@@ -85,7 +86,8 @@ def show_user():
             'created_at': user.created_at,
             'updated_at': user.updated_at,
             'user_token': user.user_token,
-            'uploaded_photo_url': user.uploaded_photo_url}), 200
+            'uploaded_photo_url': user.uploaded_photo_url,
+            "sessions": user.sessions}), 200
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404

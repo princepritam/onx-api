@@ -1,5 +1,5 @@
 from pymodm.connection import connect
-from app import app, socketio
+from app import app, socketio, celery
 
 deploy = "mongodb://testuser:qwerty123@ds241258.mlab.com:41258/heroku_mjkv6v40"
 local = "mongodb://localhost:27017/onx"
