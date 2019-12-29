@@ -46,21 +46,26 @@ def get_all_users():
         if user.user_group != None:
             user_group = CorporateGroup.objects.get({"_id": ObjectId(user.user_group)}).code
         users_list.append({
-        'user_id': str(user._id),
-        'name': user.name,
-        'email': user.email,
-        'mobile_no': user.mobile_no,
-        'nickname': user.nickname,
-        'role': user.role,
-        'preferences': user.preferences,
-        'mentor_verified': user.mentor_verified,
-        'user_group': user_group,
-        'photo_url': user.photo_url,
-        'created_at': user.created_at,
-        'updated_at': user.updated_at,
-        'user_token': user.user_token,
-        'uploaded_photo_url': user.uploaded_photo_url,
-        "sessions": user.sessions})
+            'user_id': str(user._id),
+            'name': user.name,
+            'email': user.email,
+            'mobile_no': user.mobile_no,
+            'nickname': user.nickname,
+            'role': user.role,
+            'preferences': user.preferences,
+            'mentor_verified': user.mentor_verified,
+            'user_group': user_group,
+            'photo_url': user.photo_url,
+            'created_at': user.created_at,
+            'updated_at': user.updated_at,
+            'user_token': user.user_token,
+            'background': user.background,
+            'courses': user.courses,
+            'certificates': user.certificates,
+            'linkedin': user.linkedin,
+            'uploaded_photo_url': user.uploaded_photo_url,
+            "sessions": user.sessions
+        })
     return jsonify({"users": users_list}), 200
 
 
