@@ -166,6 +166,52 @@ def end_session_on_timer(session_id, action):
             created_at= end_time.isoformat()
         ).save()
 
+@main.route("/sessions", methods=['GET'])
+def get_all_sessions():
+    try:
+        sessions = Session.objects.all()
+        sessions_list = []
+        for session in sessions:
+            mentor = session.mentor
+            mentor_details = {
+                'name': mentor.name, 
+                'nickname': mentor.nickname, 
+                'user_id': str(mentor._id), 
+                'email': mentor.email, 
+                'uploaded_photo_url': mentor.uploaded_photo_url
+            } if mentor else {}
+            student_id = session.members[0]
+            student = User.objects.get({'_id': ObjectId(student_id)})
+            student_details = {
+                'name': student.name, 
+                'nickname': student.nickname, 
+                'user_id': str(student._id), 
+                'email': student.email, 
+                'uploaded_photo_url': student.uploaded_photo_url
+            } if student else {}
+            sessions_list.append({
+                'session_id': str(session._id), 
+                'type': session.type_, 
+                'mentor': mentor_details, 
+                'student': student_details,
+                'members': session.members, 
+                'start_time':session.start_time, 
+                'status': session.status, 
+                'active_duration': session.active_duration, 
+                'end_time': session.end_time,
+                'user_feedback': session.user_feedback,
+                'mentor_feedback': session.mentor_feedback,
+                "user_rating": session.user_rating,
+                "mentor_rating": session.mentor_rating, 
+                'category': session.category, 
+                'created_at': session.created_at, 
+                'updated_at': session.updated_at
+            })
+    except Exception as e:
+        message = 'User does not exists.' if str(e) == '' else str(e)
+        return jsonify({'error': message, 'error_status': True}), 404
+    return jsonify({'sessions': sessions_list, 'error_status': False}), 200
+
 @main.route("/sessions/user", methods=['POST'])
 def get_student_sessions():
     try:
@@ -180,7 +226,7 @@ def get_student_sessions():
                 'user_id': str(mentor._id), 
                 'email': mentor.email, 
                 'uploaded_photo_url': mentor.uploaded_photo_url
-            }
+            } if mentor else {}
             student_id = session.members[0]
             student = User.objects.get({'_id': ObjectId(student_id)})
             student_details = {
@@ -189,7 +235,7 @@ def get_student_sessions():
                 'user_id': str(student._id), 
                 'email': student.email, 
                 'uploaded_photo_url': student.uploaded_photo_url
-            }
+            } if student else {}
             sessions_list.append({
                 'session_id': str(session._id), 
                 'type': session.type_, 
