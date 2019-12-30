@@ -57,12 +57,13 @@ def schedule_session():
         session_obj = Session.objects.get({'_id': ObjectId(session_id) })
         current_time = datetime.datetime.now().isoformat()
         new_session_document = {
-            'type': session_obj['type'],
-            'members': session_obj['members'],
-            'category': session_obj['category'],
+            'type': session_obj.type,
+            'members': session_obj.members,
+            'category': session_obj.category,
             'created_at': current_time,
             'status': 'scheduled_inactive',
-            'scheduled_time': scheduled_time
+            'scheduled_time': scheduled_time,
+            'mentor': session_obj.mentor
         }
         Session.from_document(new_session_document).full_clean(exclude=None)
         session = Session()
@@ -73,7 +74,7 @@ def schedule_session():
             user_id=session_obj['members'][0],
             session_id=str(session._id),
             is_dynamic=True,
-            content=("You successfully requested for a new session for " + create_params['category'] + "."),
+            content=("You successfully requested for a new session for " + create_params['category'] + "with" + session_obj.mentor.name + "."),
             created_at= current_time
         ).save()
 
@@ -88,36 +89,6 @@ def schedule_session():
 def run_celery():
     task = test_celery.apply_async(countdown=10)
     return jsonify({"Task ID": task.id, "status": task.state})
-
-@main.route('/status/<task_id>')
-def taskstatus(task_id):
-    task = test_celery.AsyncResult(task_id)
-    if task.state == 'PENDING':
-        # job did not start yet
-        response = {
-            'state': task.state,
-            'current': 0,
-            'total': 1,
-            'status': 'Pending...'
-        }
-    elif task.state != 'FAILURE':
-        response = {
-            'state': task.state,
-            'current': task.info.get('current', 0),
-            'total': task.info.get('total', 1),
-            'status': task.info.get('status', '')
-        }
-        if 'result' in task.info:
-            response['result'] = task.info['result']
-    else:
-        # something went wrong in the background job
-        response = {
-            'state': task.state,
-            'current': 1,
-            'total': 1,
-            'status': str(task.info),  # this is the exception raised
-        }
-    return jsonify(response)
 
 @celery.task
 def test_celery():
@@ -270,8 +241,9 @@ def get_requested_sessions():
         preferences = mentor.preferences.copy()
         preferences.append('others')
         sessions_list = []
-        for session in Session.objects.raw({'status': {'$in':['inactive', 'scheduled_inactive']}, 'category': {'$in': preferences}}):
-            # code.interact(local=dict(globals(), **locals()))
+        # code.interact(local=dict(globals(), **locals()))
+        for session in Session.objects.raw({'$or': [{'status': {'$in':['inactive']}, 'category': {'$in': ["Career"]}},
+                                                    {'status': {'$in':['scheduled_inactive']}, 'mentor': mentor._id}]}):
             student_id = session.members[0]
             student_obj = User.objects.get({'_id': ObjectId(student_id)})
             student_details = {
