@@ -1,5 +1,5 @@
 # APIs for Session
-import datetime, code
+import datetime, code, dateutil.parser
 from flask import Blueprint, request, jsonify
 from bson import ObjectId, errors
 from pymongo.errors import DuplicateKeyError
@@ -85,15 +85,18 @@ def schedule_session():
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
 
-@main.route("/session/celery")
-def run_celery():
-    task = test_celery.apply_async(countdown=10)
-    return jsonify({"Task ID": task.id, "status": task.state})
-
 @celery.task
-def test_celery():
-    session = Session().save()
-    return str(session._id)
+def schedule_session(session):
+    session.update({'$set': {'status': 'accepted', 'updated_at': datetime.datetime.now().isoformat}})
+    Activity(
+        user_id= session.members[0],
+        session_id=str(session._id),
+        is_dynamic= True,
+        content= "Please start your session for " + session.category + ".",
+        created_at= datetime.datetime.now().isoformat()).save()
+    socket_params["student_id"] = session.members[0]
+    socket_params["mentor_id"] = str(session.mentor._id)
+
 
 def end_session_on_timer(session_id, action):
     session_object_id = ObjectId(session_id)
@@ -237,7 +240,7 @@ def get_mentor_sessions():
         user_id = request.get_json()['user_id']
         mentor = User.objects.get({'_id': ObjectId(user_id)})
         sessions_list = []
-        for session in Session.objects.raw({'status': {'$in':["active", "ended"]}, 'mentor': mentor._id}):
+        for session in Session.objects.raw({'status': {'$in':["active", "ended", "scheduled_inactive"]}, 'mentor': mentor._id}):
             mentor = session.mentor
             mentor_details = {
                 'name': mentor.name, 
@@ -453,6 +456,21 @@ def update_session(action=None):
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'accepted', "mentor": mentor._id}})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= True, content= (mentor.name + " accepted your session for " + session_.category + "."), created_at= datetime.datetime.now().isoformat()).save()
                         
+            student_id = session_.members[0]
+            socket_params["student_id"] = str(student_id)
+        elif action == "accept" and session_.status == 'scheduled_inactive':
+            mentor = session_.mentor
+            session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'scheduled_active'}})
+            scheduled_time = dateutil.parser.parse(session.scheduled_time)
+            current_time = datetime.datetime.now()
+            countdown_seconds = (scheduled_time - current_time).total_seconds()
+            schedule_session = schedule_session(session).apply_async(countdown=countdown_seconds)
+            Activity(
+                user_id= session_.members[0],
+                session_id=str(session_._id),
+                is_dynamic= True,
+                content= (mentor.name + " accepted your session for " + session_.category + ", and has been scheduled as per your request."),
+                created_at= datetime.datetime.now().isoformat()).save()        
             student_id = session_.members[0]
             socket_params["student_id"] = str(student_id)
         elif action == "kill" and session_.status == 'inactive':
