@@ -13,6 +13,10 @@ app.config['SECRET_KEY'] = 'unxunxunx'
 def home():
     return 'Hello! Your app is up and running.'
 
+@socketio.on('custom')
+def handle_my_custom_event(json):
+    socketio.emit('custom', json)
+    
 if __name__ == '__main__':
     socketio.run(app)
     # app.run(port=3000, debug=True, host='localhost')
