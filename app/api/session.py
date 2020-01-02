@@ -454,7 +454,7 @@ def update_session(action=None):
             else:
                 raise ValidationError("Mentor id is required to accept a session.")
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'accepted', "mentor": mentor._id}})
-            Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= True, content= (mentor.name + " accepted your session for " + session_.category + "."), created_at= datetime.datetime.now().isoformat()).save()
+            Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= True, content= (mentor.nickname + " accepted your session for " + session_.category + "."), created_at= datetime.datetime.now().isoformat()).save()
                         
             student_id = session_.members[0]
             socket_params["student_id"] = str(student_id)
@@ -469,7 +469,7 @@ def update_session(action=None):
                 user_id= session_.members[0],
                 session_id=str(session_._id),
                 is_dynamic= True,
-                content= (mentor.name + " accepted your session for " + session_.category + ", and has been scheduled as per your request."),
+                content= (mentor.nickname + " accepted your session for " + session_.category + ", and has been scheduled as per your request."),
                 created_at= datetime.datetime.now().isoformat()).save()        
             student_id = session_.members[0]
             socket_params["student_id"] = str(student_id)
