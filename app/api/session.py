@@ -291,7 +291,7 @@ def get_requested_sessions():
         preferences.append('others')
         sessions_list = []
         # code.interact(local=dict(globals(), **locals()))
-        for session in Session.objects.raw({'$or': [{'status': {'$in':['inactive']}, 'category': {'$in': ["Career"]}},
+        for session in Session.objects.raw({'$or': [{'status': {'$in':['inactive']}, 'category': {'$in': preferences}},
                                                     {'status': {'$in':['scheduled_inactive']}, 'mentor': mentor._id}]}):
             student_id = session.members[0]
             student_obj = User.objects.get({'_id': ObjectId(student_id)})
