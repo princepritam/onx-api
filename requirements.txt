@@ -14,6 +14,7 @@ pymodm==0.4.1
 pymongo==3.9.0
 python-engineio==3.10.0
 python-socketio==4.3.1
+python-dateutil==2.7.5
 six==1.13.0
 virtualenv==16.7.7
 Werkzeug==0.16.0
