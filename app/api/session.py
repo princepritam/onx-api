@@ -57,7 +57,7 @@ def schedule_session():
         session_obj = Session.objects.get({'_id': ObjectId(session_id) })
         current_time = datetime.datetime.now().isoformat()
         new_session_document = {
-            'type': session_obj.type,
+            'type_': session_obj.type_,
             'members': session_obj.members,
             'category': session_obj.category,
             'created_at': current_time,
