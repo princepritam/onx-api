@@ -349,7 +349,11 @@ def show_session():
                 'user_id': str(mentor._id),
                 'email': mentor.email,
                 'mobile_no': mentor.mobile_no,
-                'uploaded_photo_url': mentor.uploaded_photo_url
+                'uploaded_photo_url': mentor.uploaded_photo_url,
+                'certificates': mentor.certificates,
+                'background': mentor.background,
+                'courses': mentor.courses,
+                'linkedin': mentor.linkedin,
             } if mentor else {},
             'student': {
                 'name': student.name,
