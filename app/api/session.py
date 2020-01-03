@@ -63,7 +63,7 @@ def schedule_session():
             'created_at': current_time,
             'status': 'scheduled_inactive',
             'scheduled_time': scheduled_time,
-            'mentor': session_obj.mentor
+            'mentor': session_obj.mentor._id
         }
         Session.from_document(new_session_document).full_clean(exclude=None)
         session = Session()
@@ -399,7 +399,7 @@ def update_session(action=None):
         session_ = Session.objects.get({'_id': session_id})
         session = Session.objects.raw({'_id': session_id})
         socket_params = {'action': action, 'session_id': update_params['session_id'] }
-        if action == "start" and session_.status in ['accepted', 'active']:
+        if action == "start" and session_.status in ['accepted']:
             if update_params['student_id']:
                 student = User.objects.get({'_id': ObjectId(update_params['student_id'])})
                 if student.role != "student":
