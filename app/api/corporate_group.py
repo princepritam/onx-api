@@ -28,7 +28,7 @@ def get_corporate_for_user():
         return jsonify({'error': message, 'error_status': True}), 404
 
 @main.route("/corporates", methods=["GET"])
-def get_all_sessions():
+def get_all_codes():
     groups = CorporateGroup.objects.all()
     data = []
     for group in groups:

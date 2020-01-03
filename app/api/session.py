@@ -69,12 +69,12 @@ def schedule_session():
         session = Session()
         session.save(force_insert=True)
         Session.objects.raw({'_id': session._id}).update({'$set': new_session_document})
-
+        # code.interact(local=dict(globals(), **locals()))
         Activity(
-            user_id=session_obj['members'][0],
+            user_id= session_obj.members[0],
             session_id=str(session._id),
             is_dynamic=True,
-            content=("You successfully requested for a new session for " + create_params['category'] + "with" + session_obj.mentor.name + "."),
+            content=("You successfully requested for a new session for " + session_obj.category + "with" + session_obj.mentor.name + "."),
             created_at= current_time
         ).save()
 

@@ -5,8 +5,10 @@ from bson import ObjectId
 import code
 from app.models.user import *
 
-def validate_mentor(user):
+def validate_mentor(user_id):
+    user = User.objects.get({'_id': user_id})
     if user:
+        # code.interact(local=dict(globals(), **locals()))
         if not user.role == 'mentor':
             raise ValidationError('Given user is not a mentor')
     else:
