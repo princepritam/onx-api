@@ -4,6 +4,12 @@ from pymodm.errors import ValidationError
 from bson import ObjectId
 import code
 from app.models.user import *
+from app.models.connection import *
+
+def validate_connection(connection_id):
+    connection = Connection.objects.get({'_id': connection_id})
+    if not connection:
+        raise ValidationError('Connection Id is invalid.')
 
 def validate_mentor(user_id):
     user = User.objects.get({'_id': user_id})
@@ -47,6 +53,7 @@ class Session(MongoModel):
     created_at = fields.DateTimeField(required=False, mongo_name='created_at')
     updated_at = fields.DateTimeField(mongo_name='updated_at')
     scheduled_time = fields.DateTimeField(required=False, mongo_name='scheduled_time')
+    connection_id = fields.ReferenceField(Connection, mongo_name='connection_id', validators=[validate_connection],required=False)
 
     class Meta:
         write_concern = WriteConcern(j=True)

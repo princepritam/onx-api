@@ -182,8 +182,7 @@ def get_all_sessions():
                 'updated_at': session.updated_at
             })
     except Exception as e:
-        message = 'User does not exists.' if str(e) == '' else str(e)
-        return jsonify({'error': message, 'error_status': True}), 404
+        return jsonify({'error': str(e), 'error_status': True}), 404
     return jsonify({'sessions': sessions_list, 'error_status': False}), 200
 
 @main.route("/sessions/user", methods=['POST'])
@@ -380,7 +379,7 @@ def update_session_():
                 update_params[key] = val
         session = Session.objects.get({'_id':ObjectId(request.get_json()['session_id'])})
         Session.from_document(update_params).full_clean(exclude=None)
-        update_params['created_at'] = datetime.datetime.now().isoformat()
+        update_params['updated_at'] = datetime.datetime.now().isoformat()
         Session.objects.raw({'_id': session._id}).update({'$set': update_params})
         socketio.emit('session', {'action': 'update', 'session_id': str(session._id)})
     except Exception as e:
@@ -459,7 +458,7 @@ def update_session(action=None):
                 raise ValidationError("Mentor id is required to accept a session.")
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'accepted', "mentor": mentor._id}})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= True, content= (mentor.nickname + " accepted your session for " + session_.category + "."), created_at= datetime.datetime.now().isoformat()).save()
-                        
+            # Connection()      
             student_id = session_.members[0]
             socket_params["student_id"] = str(student_id)
         elif action == "accept" and session_.status == 'scheduled_inactive':

@@ -2,6 +2,7 @@ from flask import Blueprint
 from app.api.user import main as user
 from app.api.session import main as session
 from app.api.message import main as message
+from app.api.connection import main as connection
 from app.api.corporate_group import main as corporate_group
 from app.api.activity import main as activity
 from app.api import app, socketio, celery
@@ -11,3 +12,4 @@ app.register_blueprint(session) # For registering Session APIs.
 app.register_blueprint(message) # For registering Message APIs.
 app.register_blueprint(activity) # For registering Activity APIs.
 app.register_blueprint(corporate_group) # For registering Corporate Group APIs.
+app.register_blueprint(connection) # For registering Corporate Group APIs.
