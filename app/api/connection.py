@@ -59,47 +59,28 @@ def get_all_connections():
         connections = Connection.objects.all()
         connection_list = []
         for conn in connections:
-            session_ids = conn.sessions
-            session_list = []
-            for s_id in session_ids:
-                session = Session.objects.get({'_id': ObjectId(s_id)})
-                mentor = session.mentor
-                mentor_details = {
-                    'name': mentor.name, 
-                    'nickname': mentor.nickname, 
-                    'user_id': str(mentor._id), 
-                    'email': mentor.email, 
-                    'uploaded_photo_url': mentor.uploaded_photo_url
-                } if mentor else {}
-                student_id = session.members[0]
-                student = User.objects.get({'_id': ObjectId(student_id)})
-                student_details = {
-                    'name': student.name, 
-                    'nickname': student.nickname, 
-                    'user_id': str(student._id), 
-                    'email': student.email, 
-                    'uploaded_photo_url': student.uploaded_photo_url
-                } if student else {}
-                session_list.append({
-                    'session_id': str(session._id), 
-                    'type': session.type_, 
-                    'mentor': mentor_details, 
-                    'student': student_details,
-                    'members': session.members, 
-                    'start_time':session.start_time, 
-                    'status': session.status, 
-                    'active_duration': session.active_duration, 
-                    'end_time': session.end_time,
-                    'user_feedback': session.user_feedback,
-                    'mentor_feedback': session.mentor_feedback,
-                    "user_rating": session.user_rating,
-                    "mentor_rating": session.mentor_rating, 
-                    'category': session.category, 
-                    'created_at': session.created_at, 
-                    'updated_at': session.updated_at
-                })
+            mentor = conn.mentor
+            mentor_details = {
+                'name': mentor.name, 
+                'nickname': mentor.nickname, 
+                'user_id': str(mentor._id), 
+                'email': mentor.email, 
+                'uploaded_photo_url': mentor.uploaded_photo_url
+            } if mentor else {}
+            student_id = conn.members[0]
+            student = User.objects.get({'_id': ObjectId(student_id)})
+            student_details = {
+                'name': student.name, 
+                'nickname': student.nickname, 
+                'user_id': str(student._id), 
+                'email': student.email, 
+                'uploaded_photo_url': student.uploaded_photo_url
+            } if student else {}
             connection_list.append({
-                'sessions': session_list,
+                'connection_id': str(conn._id),
+                'mentor_details': mentor_details,
+                'student_details': student_details,
+                'session_count': len(conn.sessions),
                 'category': conn.category,
                 'status': conn.status,
                 'members': conn.members,
@@ -116,50 +97,21 @@ def get_user_connections():
         User.objects.get({'_id': ObjectId(user_id)})
         connection_list = []
         for connection in Connection.objects.raw({'status': {'$in': ["active", "ended", 'accepted', 'scheduled']},'members': {'$all':[user_id]}}):
-            session_ids = connection.sessions
-            session_list = []
-            for s_id in session_ids:
-                session = Session.objects.get({'_id': ObjectId(s_id)})
-                mentor = session.mentor
-                mentor_details = {
-                    'name': mentor.name, 
-                    'nickname': mentor.nickname, 
-                    'user_id': str(mentor._id), 
-                    'email': mentor.email, 
-                    'uploaded_photo_url': mentor.uploaded_photo_url
-                } if mentor else {}
-                student_id = session.members[0]
-                student = User.objects.get({'_id': ObjectId(student_id)})
-                student_details = {
-                    'name': student.name, 
-                    'nickname': student.nickname, 
-                    'user_id': str(student._id), 
-                    'email': student.email, 
-                    'uploaded_photo_url': student.uploaded_photo_url
-                } if student else {}
-                session_list.append({
-                    'session_id': str(session._id), 
-                    'type': session.type_, 
-                    'mentor': mentor_details, 
-                    'student': student_details,
-                    'members': session.members, 
-                    'start_time':session.start_time, 
-                    'status': session.status, 
-                    'active_duration': session.active_duration, 
-                    'end_time': session.end_time,
-                    'user_feedback': session.user_feedback,
-                    'mentor_feedback': session.mentor_feedback,
-                    "user_rating": session.user_rating,
-                    "mentor_rating": session.mentor_rating, 
-                    'category': session.category, 
-                    'created_at': session.created_at, 
-                    'updated_at': session.updated_at
-                })
+            mentor = connection.mentor
+            mentor_details = {
+                'name': mentor.name, 
+                'nickname': mentor.nickname, 
+                'user_id': str(mentor._id), 
+                'email': mentor.email, 
+                'uploaded_photo_url': mentor.uploaded_photo_url
+            } if mentor else {}
+
             connection_list.append({
-                'sessions': session_list,
+                'connection_id': connection._id,
+                'mentor_details': mentor_details,
                 'category': connection.category,
-                'members': connection.members,
-                'mentor': str(connection.mentor._id),
+                'status': connection.status,
+                'scheduled_time': connection.scheduled_time,
             })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
@@ -174,50 +126,21 @@ def get_mentor_connections():
         connection_list = []
         connections = Connection.objects.raw({'status': {'$in': ["active", "ended", 'accepted', 'scheduled']}, 'mentor': ObjectId(user_id) })
         for connection in connections:
-            session_ids = connection.sessions
-            session_list = []
-            for s_id in session_ids:
-                session = Session.objects.get({'_id': ObjectId(s_id)})
-                mentor = session.mentor
-                mentor_details = {
-                    'name': mentor.name, 
-                    'nickname': mentor.nickname, 
-                    'user_id': str(mentor._id), 
-                    'email': mentor.email, 
-                    'uploaded_photo_url': mentor.uploaded_photo_url
-                } if mentor else {}
-                student_id = session.members[0]
-                student = User.objects.get({'_id': ObjectId(student_id)})
-                student_details = {
-                    'name': student.name, 
-                    'nickname': student.nickname, 
-                    'user_id': str(student._id), 
-                    'email': student.email, 
-                    'uploaded_photo_url': student.uploaded_photo_url
-                } if student else {}
-                connection_list.append({
-                    'session_id': str(session._id), 
-                    'type': session.type_, 
-                    'mentor': mentor_details, 
-                    'student': student_details,
-                    'members': session.members, 
-                    'start_time':session.start_time, 
-                    'status': session.status, 
-                    'active_duration': session.active_duration, 
-                    'end_time': session.end_time,
-                    'user_feedback': session.user_feedback,
-                    'mentor_feedback': session.mentor_feedback,
-                    "user_rating": session.user_rating,
-                    "mentor_rating": session.mentor_rating, 
-                    'category': session.category, 
-                    'created_at': session.created_at, 
-                    'updated_at': session.updated_at
-                })
+            student_id = connection.members[0]
+            student = User.objects.get({'_id': ObjectId(student_id)})
+            student_details = {
+                'name': student.name, 
+                'nickname': student.nickname, 
+                'user_id': str(student._id), 
+                'email': student.email, 
+                'uploaded_photo_url': student.uploaded_photo_url
+            } if student else {}
             connection_list.append({
-                'sessions': session_list,
+                'connection_id': connection._id,
+                'student_details': student_details,
                 'category': connection.category,
-                'members': connection.members,
-                'mentor': str(connection.mentor._id),
+                'status': connection.status,
+                'scheduled_time': connection.scheduled_time,
             })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)

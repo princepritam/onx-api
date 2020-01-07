@@ -5,6 +5,7 @@ from bson import ObjectId, errors
 from pymongo.errors import DuplicateKeyError
 from app.models.session import *
 from app.models.activity import *
+from app.models.connection import *
 from threading import Timer
 from . import app, socketio, emit, celery
 
@@ -387,6 +388,11 @@ def update_session_():
         return jsonify({'error': message, 'error_status': True}), 422
     return jsonify({'message': 'Successfully updated session.', 'session_id': str(session._id), 'error_status': False}), 201
 
+def getConnection(session_obj, mentor_id):
+    student_id = session_obj.members[0]
+    connection = Connection.objects.get({ 'mentor': ObjectId(mentor_id), 'members':  { '$all':[student_id] } })
+    return connection 
+
 @main.route("/session/update/<string:action>", methods=['PATCH'])
 def update_session(action=None):
     try:
@@ -397,7 +403,6 @@ def update_session(action=None):
         session_ = Session.objects.get({'_id': session_id})
         session = Session.objects.raw({'_id': session_id})
         socket_params = {'action': action, 'session_id': update_params['session_id'] }
-        sessions=[str(session_._id)]
         
         if action == "start" and session_.status in ['accepted']:
             if update_params['student_id']:
@@ -413,7 +418,7 @@ def update_session(action=None):
             student_updater.update({'$set':{"sessions": student_sessions}})
             mentor_updater.update({'$set':{"sessions": mentor_sessions}})
 
-            Connection.objects.raw({ '_id': session_.connection_id }).update({'$set': {
+            Connection.objects.raw({ '_id': session_.connection_id._id }).update({'$set': {
                 "updated_at": datetime.datetime.now().isoformat(),
                 'status': 'active'
             }})
@@ -450,7 +455,7 @@ def update_session(action=None):
             # expiry_timer = session_expiry_timer_map[update_params['session_id']]
             # expiry_timer.cancel()
 
-            Connection.objects.raw({ '_id': session_.connection_id }).update({'$set': {
+            Connection.objects.raw({ '_id': session_.connection_id._id }).update({'$set': {
                 "updated_at": datetime.datetime.now().isoformat(),
                 'status': 'ended'
             }})
@@ -470,15 +475,33 @@ def update_session(action=None):
                     raise ValidationError("Given mentor id is incorrect, role of the user is not 'mentor'.")
             else:
                 raise ValidationError("Mentor id is required to accept a session.")
-            conn = Connection(
-                sessions=sessions,
-                status='accepted',
-                mentor=ObjectId(mentor_id),
-                members=session_.members,
-                category=session_.category
-            )      
-            conn.save()
-            session.update({'$set': { 'connection_id': str(conn._id), "updated_at": datetime.datetime.now().isoformat(), 'status': 'accepted', "mentor": mentor._id}})
+            connection = getConnection(session_, mentor_id)
+            connection_id = connection._id if connection else None
+            if (connection_id):
+                sessions = connection.sessions
+                sessions.append(str(session_._id))
+                Connection.objects.raw({ '_id': connection_id }).update({'$set': {
+                    'sessions': sessions,
+                    'status': 'accepted',
+                }})
+            else:
+                sessions=[str(session_._id)]
+                conn = Connection()
+                conn.save()
+                Connection.objects.raw({ '_id': conn._id}).update({'$set': {
+                    'sessions': sessions,
+                    'status': 'accepted',
+                    'mentor': ObjectId(mentor_id),
+                    'members': session_.members,
+                    'category': session_.category
+                }})
+                connection_id = conn._id
+            session.update({'$set': { 
+                'connection_id': connection_id, 
+                "updated_at": datetime.datetime.now().isoformat(), 
+                'status': 'accepted', 
+                "mentor": mentor._id
+            }})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= True, content= (mentor.nickname + " accepted your session for " + session_.category + "."), created_at= datetime.datetime.now().isoformat()).save()
 
             student_id = session_.members[0]
