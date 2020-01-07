@@ -463,8 +463,9 @@ def update_session(action=None):
             socket_params["student_id"] = str(student_id)
             socket_params["mentor_id"] = str(session_.mentor._id)
         elif action == "accept" and session_.status == 'inactive':
-            if update_params['mentor_id']:
-                mentor = User.objects.get({'_id': ObjectId(update_params['mentor_id'])})
+            mentor_id = update_params['mentor_id']
+            if mentor_id:
+                mentor = User.objects.get({'_id': ObjectId(mentor_id)})
                 if mentor.role != "mentor":
                     raise ValidationError("Given mentor id is incorrect, role of the user is not 'mentor'.")
             else:
@@ -472,7 +473,7 @@ def update_session(action=None):
             conn = Connection(
                 sessions=sessions,
                 status='accepted',
-                mentor=session_.mentor._id,
+                mentor=ObjectId(mentor_id),
                 members=session_.members,
                 category=session_.category
             )      
