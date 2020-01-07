@@ -101,6 +101,7 @@ def get_all_connections():
             connection_list.append({
                 'sessions': session_list,
                 'category': conn.category,
+                'status': conn.status,
                 'members': conn.members,
                 'mentor': str(conn.mentor._id),
             })
@@ -171,7 +172,8 @@ def get_mentor_connections():
         user_id = request.get_json()['user_id']
         User.objects.get({'_id': ObjectId(user_id)})
         connection_list = []
-        for connection in Connection.objects.raw({'status': {'$in': ["active", "ended", 'accepted' 'scheduled']}, 'mentor': user_id }):
+        connections = Connection.objects.raw({'status': {'$in': ["active", "ended", 'accepted', 'scheduled']}, 'mentor': ObjectId(user_id) })
+        for connection in connections:
             session_ids = connection.sessions
             session_list = []
             for s_id in session_ids:

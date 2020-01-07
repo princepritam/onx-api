@@ -394,10 +394,11 @@ def update_session(action=None):
         # global session_expiry_timer_map
         update_params = request.get_json()
         session_id = ObjectId(update_params['session_id'])
-        # validates if given session id is valid.
         session_ = Session.objects.get({'_id': session_id})
         session = Session.objects.raw({'_id': session_id})
         socket_params = {'action': action, 'session_id': update_params['session_id'] }
+        sessions=[str(session_._id)]
+        
         if action == "start" and session_.status in ['accepted']:
             if update_params['student_id']:
                 student = User.objects.get({'_id': ObjectId(update_params['student_id'])})
@@ -411,10 +412,17 @@ def update_session(action=None):
             mentor_sessions = session_.mentor.sessions + 1
             student_updater.update({'$set':{"sessions": student_sessions}})
             mentor_updater.update({'$set':{"sessions": mentor_sessions}})
+
+            Connection.objects.raw({ '_id': session_.connection_id }).update({'$set': {
+                "updated_at": datetime.datetime.now().isoformat(),
+                'status': 'active'
+            }})
+
             session.update({'$set': {
-                                "start_time": datetime.datetime.now().isoformat(),
-                                "updated_at": datetime.datetime.now().isoformat(),
-                                'status': 'active'}})
+                "start_time": datetime.datetime.now().isoformat(),
+                "updated_at": datetime.datetime.now().isoformat(),
+                'status': 'active'
+            }})
             Activity(
                 user_id= session_.members[0],
                 session_id=str(session_._id),
@@ -442,6 +450,11 @@ def update_session(action=None):
             # expiry_timer = session_expiry_timer_map[update_params['session_id']]
             # expiry_timer.cancel()
 
+            Connection.objects.raw({ '_id': session_.connection_id }).update({'$set': {
+                "updated_at": datetime.datetime.now().isoformat(),
+                'status': 'ended'
+            }})
+
             session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration,
                                      "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "Successfully Ended session for " + session_.category + ".", created_at= datetime.datetime.now().isoformat()).save()
@@ -456,13 +469,20 @@ def update_session(action=None):
                     raise ValidationError("Given mentor id is incorrect, role of the user is not 'mentor'.")
             else:
                 raise ValidationError("Mentor id is required to accept a session.")
-            session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'accepted', "mentor": mentor._id}})
+            conn = Connection(
+                sessions=sessions,
+                status='accepted',
+                mentor=session_.mentor._id,
+                members=session_.members,
+                category=session_.category
+            )      
+            conn.save()
+            session.update({'$set': { 'connection_id': str(conn._id), "updated_at": datetime.datetime.now().isoformat(), 'status': 'accepted', "mentor": mentor._id}})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= True, content= (mentor.nickname + " accepted your session for " + session_.category + "."), created_at= datetime.datetime.now().isoformat()).save()
-            # Connection()      
+
             student_id = session_.members[0]
             socket_params["student_id"] = str(student_id)
         elif action == "accept" and session_.status == 'scheduled_inactive':
-            mentor = session_.mentor
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'scheduled_active'}})
             scheduled_time = dateutil.parser.parse(session.scheduled_time)
             current_time = datetime.datetime.now()
