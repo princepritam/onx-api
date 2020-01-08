@@ -6,7 +6,9 @@ from pymongo.errors import DuplicateKeyError
 from app.models.session import *
 from app.models.connection import *
 from app.models.activity import *
+from app.models.message import *
 from threading import Timer
+from functools import reduce
 from . import app, socketio, emit, celery
 
 main = Blueprint('connection', __name__)
@@ -107,7 +109,7 @@ def get_user_connections():
             } if mentor else {}
 
             connection_list.append({
-                'connection_id': connection._id,
+                'connection_id': str(connection._id),
                 'mentor_details': mentor_details,
                 'category': connection.category,
                 'status': connection.status,
@@ -136,7 +138,7 @@ def get_mentor_connections():
                 'uploaded_photo_url': student.uploaded_photo_url
             } if student else {}
             connection_list.append({
-                'connection_id': connection._id,
+                'connection_id': str(connection._id),
                 'student_details': student_details,
                 'category': connection.category,
                 'status': connection.status,
@@ -146,3 +148,36 @@ def get_mentor_connections():
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
     return jsonify({'connections': connection_list, 'error_status': False}), 200
+
+def fetch_messages(msgs, session_id):
+    result = []
+    messages = Message.objects.raw({'session': session_id})
+    for message in messages:
+        user = message.sender
+        sender_details = {
+            "user_id": str(user._id), 
+            "name": user.name, 
+            "email": user.email, 
+            "role": user.role
+        }
+        result.append({
+            "message_id": str(message._id), 
+            "session_id": str(message.session._id), 
+            "sender": sender_details,
+            "content": message.content, 
+            "type": message.type_, 
+            "created_at": message.created_at
+        })
+    return msgs + result
+
+@main.route("/connections/messages", methods=['POST'])
+def get_connection_messages():
+    try:
+        params = request.get_json()
+        conn_id = params['connection_id']
+        conn_obj = Connection.objects.get({ '_id' : ObjectId(conn_id) })
+        sessions = conn_obj.sessions
+        messages = reduce(fetch_messages, sessions, [])
+    except Exception as e:
+        return jsonify({'error': str(e), 'error_status': True}), 404
+    return jsonify({'messages': messages, 'error_status': False}), 200
