@@ -48,6 +48,3 @@ class Connection(MongoModel):
         write_concern = WriteConcern(j=True)
         ignore_unknown_fields = True
         connection_alias = 'onx-app'
-
-    # def clean(self):
-    #     self.validate_type()

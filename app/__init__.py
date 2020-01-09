@@ -5,7 +5,7 @@ from app.api.message import main as message
 from app.api.connection import main as connection
 from app.api.corporate_group import main as corporate_group
 from app.api.activity import main as activity
-from app.api import app, socketio, celery
+from app.api import app, socketio, celery_client
 
 app.register_blueprint(user) # For registering User APIs.
 app.register_blueprint(session) # For registering Session APIs.

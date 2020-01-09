@@ -3,22 +3,28 @@ import datetime, code, dateutil.parser
 from flask import Blueprint, request, jsonify
 from bson import ObjectId, errors
 from pymongo.errors import DuplicateKeyError
+from celery.task.control import revoke
+from celery.result import AsyncResult
+import redis
 from app.models.session import *
 from app.models.activity import *
+<<<<<<< Updated upstream
 from app.models.connection import *
 from threading import Timer
 from . import app, socketio, emit, celery
+=======
+from . import app, socketio, emit, celery_client
+>>>>>>> Stashed changes
 
 main = Blueprint('session', __name__)
 
-# request_expiry_timer_map = {}
-# session_expiry_timer_map = {}
+redis_conn_local = redis.Redis(host='localhost', port=6379, db=0)
+redis_conn_deploy = redis.Redis(host='barb.redistogo.com',port=10037, db=0, password='45efe1ab922687bd6d3f31101e657317')
 
 @main.route("/session/create", methods=['POST'])
 def create_session():
     create_params = {}
     try:
-        # global request_expiry_timer_map
         valid_params = ['type', 'members', 'category', 'hours', 'description']
         for key, val in request.get_json().items():
             if key in valid_params:
@@ -28,7 +34,11 @@ def create_session():
         session.save(force_insert=True)
         create_params['created_at'] = datetime.datetime.now().isoformat()
         Session.objects.raw({'_id': session._id}).update({'$set': create_params})
+        kill_session_task = kill_session.apply_async([str(session._id)], countdown=60)
+        kill_session_task.revoke(terminate=True)
         # code.interact(local=dict(globals(), **locals()))
+        # AsyncResult(kill_session_task.id).revoke(terminate=True, signal='SIGKILL')
+        redis_conn_local.set(str(session._id), kill_session_task.id.encode('utf=8'))
         Activity(
             user_id=create_params['members'][0],
             session_id=str(session._id),
@@ -36,12 +46,6 @@ def create_session():
             content= ("You successfully requested for a new session for " + create_params['category'] + "."),
             created_at= datetime.datetime.now().isoformat()).save()
         socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
-        
-        # time_in_secs = 30*60 # 30mins
-        # request_expiry_timer = Timer(time_in_secs, end_session_on_timer, (session._id, 'kill'))
-        # request_expiry_timer.start()
-
-        # request_expiry_timer_map[str(session._id)] = request_expiry_timer
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
@@ -86,7 +90,7 @@ def schedule_session():
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
 
-@celery.task
+@celery_client.task
 def schedule_session(session):
     session.update({'$set': {'status': 'accepted', 'updated_at': datetime.datetime.now().isoformat}})
     Activity(
@@ -97,6 +101,17 @@ def schedule_session(session):
         created_at= datetime.datetime.now().isoformat()).save()
     socket_params["student_id"] = session.members[0]
     socket_params["mentor_id"] = str(session.mentor._id)
+
+
+@celery_client.task
+def end_session():
+    update_session("end")
+
+
+@celery_client.task
+def kill_session(session_id):
+    Session.objects.raw({'_id':ObjectId(session_id)}).update({'$set': {'updated_at': datetime.datetime.now().isoformat(), 'status': 'lost'}})
+    return str(session_id)
 
 
 def end_session_on_timer(session_id, action):
@@ -396,8 +411,6 @@ def getConnection(session_obj, mentor_id):
 @main.route("/session/update/<string:action>", methods=['PATCH'])
 def update_session(action=None):
     try:
-        # global request_expiry_timer_map
-        # global session_expiry_timer_map
         update_params = request.get_json()
         session_id = ObjectId(update_params['session_id'])
         session_ = Session.objects.get({'_id': session_id})
@@ -405,6 +418,8 @@ def update_session(action=None):
         socket_params = {'action': action, 'session_id': update_params['session_id'] }
         
         if action == "start" and session_.status in ['accepted']:
+            kill_accepted_task_id = redis_conn_local.get(update_params['session_id']).decode('utf-8')
+            AsyncResult(kill_accepted_task_id).revoke(terminate=True)
             if update_params['student_id']:
                 student = User.objects.get({'_id': ObjectId(update_params['student_id'])})
                 if student.role != "student":
@@ -436,14 +451,6 @@ def update_session(action=None):
                 created_at= datetime.datetime.now().isoformat()).save()
             socket_params["mentor_id"] = str(session_.mentor._id)
 
-            # expiry_timer = request_expiry_timer_map[update_params['session_id']]
-            # expiry_timer.cancel()
-
-            # time_in_secs = 1*60*60  # 1 hour
-            # session_expiry_timer = Timer(time_in_secs, end_session_on_timer, (session_._id, 'end'))
-            # session_expiry_timer.start()
-
-            # session_expiry_timer_map[update_params['session_id']] = session_expiry_timer
         elif action == "end" and session_.status == 'active':
             end_time = datetime.datetime.now()
             seconds = (end_time - session_.start_time).total_seconds()
@@ -463,10 +470,10 @@ def update_session(action=None):
             session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration,
                                      "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= "Successfully Ended session for " + session_.category + ".", created_at= datetime.datetime.now().isoformat()).save()
-            
             student_id = session_.members[0]
             socket_params["student_id"] = str(student_id)
             socket_params["mentor_id"] = str(session_.mentor._id)
+
         elif action == "accept" and session_.status == 'inactive':
             mentor_id = update_params['mentor_id']
             if mentor_id:
@@ -475,6 +482,7 @@ def update_session(action=None):
                     raise ValidationError("Given mentor id is incorrect, role of the user is not 'mentor'.")
             else:
                 raise ValidationError("Mentor id is required to accept a session.")
+<<<<<<< Updated upstream
             connection = getConnection(session_, mentor_id)
             connection_id = connection._id if connection else None
             if (connection_id):
@@ -504,8 +512,17 @@ def update_session(action=None):
             }})
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= True, content= (mentor.nickname + " accepted your session for " + session_.category + "."), created_at= datetime.datetime.now().isoformat()).save()
 
+=======
+            session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'accepted', "mentor": mentor._id}})
+            kill_session_task_id = redis_conn_local.get(update_params['session_id']).decode('utf-8')
+            terminate_task(kill_session_task_id)
+            kill_acepted_session = kill_session.apply_async([update_params['session_id']], countdown=20)
+            redis_conn_local.set(update_params['session_id'], kill_acepted_session.id.encode('utf-8'))
+            Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= True, content= (mentor.nickname + " accepted your session for " + session_.category + "."), created_at= datetime.datetime.now().isoformat()).save()
+>>>>>>> Stashed changes
             student_id = session_.members[0]
             socket_params["student_id"] = str(student_id)
+
         elif action == "accept" and session_.status == 'scheduled_inactive':
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'scheduled_active'}})
             scheduled_time = dateutil.parser.parse(session.scheduled_time)
@@ -520,10 +537,13 @@ def update_session(action=None):
                 created_at= datetime.datetime.now().isoformat()).save()        
             student_id = session_.members[0]
             socket_params["student_id"] = str(student_id)
+
         elif action == "kill" and session_.status == 'inactive':
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
+
         elif action == "schedule" and session_.status == 'scheduled_inactive':
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'scheduled_active'}})
+
         else:
             raise ValidationError("Presently the session is " + session_.status)
         socketio.emit('session', socket_params)
@@ -532,3 +552,9 @@ def update_session(action=None):
         message = 'Session does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully updated session.', 'error_status': False}), 202
+
+@main.route('/terminate', methods=['POST'])
+def terminate_task():
+    task_id = request.get_json()['task_id']
+    task = AsyncResult(task_id)
+    task.revoke(terminate=True)
