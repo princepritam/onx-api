@@ -183,3 +183,41 @@ def get_connection_messages():
         message = 'connection does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
     return jsonify({'messages': messages, 'error_status': False}), 200
+
+
+
+@main.route("/connection", methods=['POST'])
+def get__connection():
+    try:
+        connection_id = request.get_json()['connection_id']
+        connection = Connection.objects.get({'_id': ObjectId(connection_id)})
+        sessions = connection.sessions
+        messages = reduce(fetch_messages, sessions, {})
+        student_id = connection.members[0]
+        mentor_obj = connection.mentor
+        student_obj = User.objects.get({'_id': ObjectId(student_id)})
+        mentor = {
+            "user_id": str(mentor_obj._id), 
+            "nickname": mentor_obj.nickname, 
+            "uploaded_photo_url": mentor_obj.uploaded_photo_url, 
+            "email": mentor_obj.email, 
+            "role": mentor_obj.role
+        }
+        student = {
+            "user_id": str(student_obj._id), 
+            "uploaded_photo_url": student_obj.uploaded_photo_url, 
+            "nickname": student_obj.nickname, 
+            "email": student_obj.email, 
+            "role": student_obj.role
+        }
+        conn_obj = {
+            'connection_id': connection_id,
+            'status': connection.status,
+            'student': student,
+            'mentor': mentor,
+            'messages': messages
+        }
+    except Exception as e:
+        message = 'User does not exists.' if str(e) == '' else str(e)
+        return jsonify({'error': message, 'error_status': True}), 404
+    return jsonify({'connection': conn_obj, 'error_status': False}), 200
