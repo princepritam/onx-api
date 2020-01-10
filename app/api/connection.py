@@ -149,14 +149,14 @@ def get_mentor_connections():
         return jsonify({'error': message, 'error_status': True}), 404
     return jsonify({'connections': connection_list, 'error_status': False}), 200
 
-def fetch_messages(msgs, session_id):
+def fetch_messages(message_map, session_id):
     result = []
-    messages = Message.objects.raw({'session': session_id})
+    messages = Message.objects.raw({'session': ObjectId(session_id)})
     for message in messages:
         user = message.sender
         sender_details = {
             "user_id": str(user._id), 
-            "name": user.name, 
+            "nickname": user.nickname, 
             "email": user.email, 
             "role": user.role
         }
@@ -168,7 +168,8 @@ def fetch_messages(msgs, session_id):
             "type": message.type_, 
             "created_at": message.created_at
         })
-    return msgs + result
+    message_map[session_id] = result
+    return message_map
 
 @main.route("/connections/messages", methods=['POST'])
 def get_connection_messages():
@@ -177,7 +178,8 @@ def get_connection_messages():
         conn_id = params['connection_id']
         conn_obj = Connection.objects.get({ '_id' : ObjectId(conn_id) })
         sessions = conn_obj.sessions
-        messages = reduce(fetch_messages, sessions, [])
+        messages = reduce(fetch_messages, sessions, {})
     except Exception as e:
-        return jsonify({'error': str(e), 'error_status': True}), 404
+        message = 'connection does not exists.' if str(e) == '' else str(e)
+        return jsonify({'error': message, 'error_status': True}), 404
     return jsonify({'messages': messages, 'error_status': False}), 200
