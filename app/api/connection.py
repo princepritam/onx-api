@@ -110,7 +110,7 @@ def get_user_connections():
 
             connection_list.append({
                 'connection_id': str(connection._id),
-                'mentor_details': mentor_details,
+                'mentor': mentor_details,
                 'category': connection.category,
                 'status': connection.status,
                 'scheduled_time': connection.scheduled_time,
@@ -139,7 +139,7 @@ def get_mentor_connections():
             } if student else {}
             connection_list.append({
                 'connection_id': str(connection._id),
-                'student_details': student_details,
+                'student': student_details,
                 'category': connection.category,
                 'status': connection.status,
                 'scheduled_time': connection.scheduled_time,
