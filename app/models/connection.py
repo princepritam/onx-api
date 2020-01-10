@@ -26,6 +26,7 @@ def validate_users(user_ids):
 
 def validate_sessions(session_ids):
     try:
+        # code.interact(local=dict(globals(), **locals()))
         for id_ in session_ids:
             session = Session.objects.get({"_id": ObjectId(id_)})
             if not session:
@@ -48,6 +49,3 @@ class Connection(MongoModel):
         write_concern = WriteConcern(j=True)
         ignore_unknown_fields = True
         connection_alias = 'onx-app'
-
-    # def clean(self):
-    #     self.validate_type()

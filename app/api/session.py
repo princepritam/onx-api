@@ -389,9 +389,13 @@ def update_session_():
     return jsonify({'message': 'Successfully updated session.', 'session_id': str(session._id), 'error_status': False}), 201
 
 def getConnection(session_obj, mentor_id):
-    student_id = session_obj.members[0]
-    connection = Connection.objects.get({ 'mentor': ObjectId(mentor_id), 'members':  { '$all':[student_id] } })
-    return connection 
+    try:
+        student_id = session_obj.members[0]
+        # code.interact(local=dict(globals(), **locals()))
+        connection = Connection.objects.get({ 'mentor': ObjectId(mentor_id), 'members':  { '$all':[student_id] } })
+    except Exception as e:
+        connection = None
+    
 
 @main.route("/session/update/<string:action>", methods=['PATCH'])
 def update_session(action=None):
@@ -463,6 +467,7 @@ def update_session(action=None):
                 raise ValidationError("Mentor id is required to accept a session.")
             if session_.category != "others" :
                 connection = getConnection(session_, mentor_id)
+                code.interact(local=dict(globals(), **locals()))
                 connection_id = connection._id if connection else None
                 if (connection_id):
                     sessions = connection.sessions
