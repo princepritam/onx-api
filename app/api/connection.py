@@ -168,8 +168,8 @@ def fetch_messages(message_map, session_id):
             "type": message.type_, 
             "created_at": message.created_at
         })
-    message_map[session_id] = result
-    return message_map
+    new_map = { session_id: result }
+    return dict(**message_map, **new_map)
 
 @main.route("/connections/messages", methods=['POST'])
 def get_connection_messages():
@@ -184,7 +184,15 @@ def get_connection_messages():
         return jsonify({'error': message, 'error_status': True}), 404
     return jsonify({'messages': messages, 'error_status': False}), 200
 
-
+def fetch_sessions(output, session_id):
+    session_obj = Session.objects.get({'_id': ObjectId(session_id)})
+    session_map = {
+        'session_id': session_id,
+        'session_status': session_obj.status,
+        'created_at': session_obj.created_at,
+    }
+    new_map = { session_id: session_map }
+    return dict(**output, **new_map)
 
 @main.route("/connection", methods=['POST'])
 def get__connection():
@@ -193,9 +201,12 @@ def get__connection():
         connection = Connection.objects.get({'_id': ObjectId(connection_id)})
         sessions = connection.sessions
         messages = reduce(fetch_messages, sessions, {})
+        session_detail_map = reduce(fetch_sessions, sessions, {})
+        # code.interact(local=dict(globals(), **locals()))
         student_id = connection.members[0]
         mentor_obj = connection.mentor
         student_obj = User.objects.get({'_id': ObjectId(student_id)})
+        # current_session = connection.current_session
         mentor = {
             "user_id": str(mentor_obj._id), 
             "nickname": mentor_obj.nickname, 
@@ -213,6 +224,8 @@ def get__connection():
         conn_obj = {
             'connection_id': connection_id,
             'status': connection.status,
+            # 'current_session': str(current_session._id),
+            'sessions': session_detail_map,
             'student': student,
             'mentor': mentor,
             'messages': messages

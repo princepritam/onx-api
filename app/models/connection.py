@@ -38,6 +38,7 @@ def validate_sessions(session_ids):
 class Connection(MongoModel):
     category = fields.CharField(mongo_name='category', required=False)
     mentor = fields.ReferenceField(User, mongo_name='mentor', validators=[validate_mentor])
+    # current_session = fields.ReferenceField(Session, mongo_name='current_session')
     members = fields.ListField(mongo_name='members', validators=[validate_users], required=False)
     sessions = fields.ListField(mongo_name='sessions', validators=[validate_sessions], required=False)
     status = fields.CharField(choices=['scheduled', 'active', 'accepted', 'inactive', 'ended', 'lost'], mongo_name='status', default='inactive')

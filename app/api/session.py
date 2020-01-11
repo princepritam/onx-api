@@ -391,7 +391,6 @@ def update_session_():
 def getConnection(session_obj, mentor_id):
     try:
         student_id = session_obj.members[0]
-        # code.interact(local=dict(globals(), **locals()))
         connection = Connection.objects.get({ 'mentor': ObjectId(mentor_id), 'members':  { '$all':[student_id] } })
     except Exception as e:
         connection = None
