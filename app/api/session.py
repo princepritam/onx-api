@@ -418,11 +418,11 @@ def update_session(action=None):
             mentor_sessions = session_.mentor.sessions + 1
             student_updater.update({'$set':{"sessions": student_sessions}})
             mentor_updater.update({'$set':{"sessions": mentor_sessions}})
-
-            Connection.objects.raw({ '_id': session_.connection_id._id }).update({'$set': {
-                "updated_at": datetime.datetime.now().isoformat(),
-                'status': 'active'
-            }})
+            if session_.category != "others" :
+                Connection.objects.raw({ '_id': session_.connection_id._id }).update({'$set': {
+                    "updated_at": datetime.datetime.now().isoformat(),
+                    'status': 'active'
+                }})
 
             session.update({'$set': {
                 "start_time": datetime.datetime.now().isoformat(),
@@ -444,10 +444,11 @@ def update_session(action=None):
             minutes = int((seconds % 3600) // 60)
             secs = int(seconds % 60)
             active_duration = '{}:{}:{}'.format(hours, minutes, secs)
-            Connection.objects.raw({ '_id': session_.connection_id._id }).update({'$set': {
-                "updated_at": datetime.datetime.now().isoformat(),
-                'status': 'ended'
-            }})
+            if session_.category != "others" : 
+                Connection.objects.raw({ '_id': session_.connection_id._id }).update({'$set': {
+                    "updated_at": datetime.datetime.now().isoformat(),
+                    'status': 'ended'
+                }})
 
             session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration,
                                      "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
