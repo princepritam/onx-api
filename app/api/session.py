@@ -39,77 +39,6 @@ def create_session():
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
 
 
-@main.route("/session/schedule", methods=['POST'])
-def schedule_session():
-    try:
-        params = request.get_json()
-        session_id = params['session_id']
-        scheduled_time = params['scheduled_time']
-        session_obj = Session.objects.get({'_id': ObjectId(session_id) })
-        current_time = datetime.datetime.now().isoformat()
-        new_session_document = {
-            'type_': session_obj.type_,
-            'members': session_obj.members,
-            'category': session_obj.category,
-            'created_at': current_time,
-            'status': 'scheduled',
-            'mentor': session_obj.mentor._id,
-            'connection_id': session_obj.connection_id._id
-        }
-        Session.from_document(new_session_document).full_clean(exclude=None)
-        session = Session()
-        session.save(force_insert=True)
-        Session.objects.raw({'_id': session._id}).update({'$set': new_session_document})
-        Connection.objects.raw({'_id': ObjectId(session.connection_id)}).update({'$set':{
-            "status": 'scheduled',
-            'scheduled_time': scheduled_time,
-            "sessions":session.connection_id.sessions.append(str(session._id))}})
-    # code.interact(local=dict(globals(), **locals()))
-        scheduled_time = dateutil.parser.parse(scheduled_time)
-        current_time = datetime.datetime.now()
-        countdown_seconds = (scheduled_time - current_time).total_seconds()
-        schedule_session = schedule_session_job.apply_async([session], countdown=countdown_seconds)
-        notifier_countdown_seconds = countdown_seconds - 7200
-        notify_mentor = create_notification.apply_async([session.members[0], session], countdown=notifier_countdown_seconds)
-        notify_student = create_notification.apply_async([str(session.mentor._id), session], countdown=notifier_countdown_seconds)
-        Activity(
-            user_id= session_obj.members[0],
-            session_id=str(session._id),
-            is_dynamic=True,
-            content=("You successfully scheduled a new session for " + session_obj.category + "."),
-            created_at= current_time
-        ).save()
-
-        socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
-        
-    except Exception as e:
-        message = 'User does not exists.' if str(e) == '' else str(e)
-        return jsonify({'error': message, 'error_status': True}), 200
-    return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
-
-@celery.task
-def schedule_session_job(session):
-    session.update({'$set': {'status': 'accepted', 'updated_at': datetime.datetime.now().isoformat()}})     
-    Connection.objects.raw({'_id': ObjectId(session.connection_id)}).update({'$set':{"status": 'accepted'}})
-    # Activity(
-    #     user_id= session.members[0],
-    #     session_id=str(session._id),
-    #     is_dynamic= True,
-    #     content= "Please start your session for " + session.category + ".",
-    #     created_at= datetime.datetime.now().isoformat()).save()
-    # socket_params["student_id"] = session.members[0]
-    # socket_params["mentor_id"] = str(session.mentor._id)
-
-@celery.task
-def create_notification(user_id,session):
-    Activity(
-        user_id= user_id,
-        session_id=str(session._id),
-        is_dynamic=False,
-        content=("Your session will start in 2 hours for " + session.category + "."),
-        created_at= datetime.datetime.now().isoformat()
-    ).save()
-
 # def end_session_on_timer(session_id, action):
 #     session_object_id = ObjectId(session_id)
 #     session = Session.objects.get({'_id': session_object_id })
@@ -312,9 +241,9 @@ def get_requested_sessions():
                 'email': student_obj.email,
                 'uploaded_photo_url': student_obj.uploaded_photo_url
             }
-            if (session.connection_id) {
+            if (session.connection_id):
                 connection_mentor = session.connection_id.mentor
-                if (str(connection_mentor._id) == user_id) {
+                if str(connection_mentor._id) == user_id :
                     sessions_list.append({
                         'session_id': str(session._id),
                         'type': session.type_,
@@ -327,8 +256,7 @@ def get_requested_sessions():
                         'updated_at': session.updated_at,
                         'description': session.description
                     })
-                }
-            } else {
+            else:
                 sessions_list.append({
                     'session_id': str(session._id),
                     'type': session.type_,
@@ -341,7 +269,6 @@ def get_requested_sessions():
                     'updated_at': session.updated_at,
                     'description': session.description
                 })
-            }
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
