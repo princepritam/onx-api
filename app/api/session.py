@@ -312,18 +312,36 @@ def get_requested_sessions():
                 'email': student_obj.email,
                 'uploaded_photo_url': student_obj.uploaded_photo_url
             }
-            sessions_list.append({
-                'session_id': str(session._id),
-                'type': session.type_,
-                'student_details': student_details,
-                'members': session.members,
-                'start_time': session.start_time,
-                'status': session.status,
-                'category': session.category,
-                'created_at': session.created_at,
-                'updated_at': session.updated_at,
-                'description': session.description
-            })
+            if (session.connection_id) {
+                connection_mentor = session.connection_id.mentor
+                if (str(connection_mentor._id) == user_id) {
+                    sessions_list.append({
+                        'session_id': str(session._id),
+                        'type': session.type_,
+                        'student_details': student_details,
+                        'members': session.members,
+                        'start_time': session.start_time,
+                        'status': session.status,
+                        'category': session.category,
+                        'created_at': session.created_at,
+                        'updated_at': session.updated_at,
+                        'description': session.description
+                    })
+                }
+            } else {
+                sessions_list.append({
+                    'session_id': str(session._id),
+                    'type': session.type_,
+                    'student_details': student_details,
+                    'members': session.members,
+                    'start_time': session.start_time,
+                    'status': session.status,
+                    'category': session.category,
+                    'created_at': session.created_at,
+                    'updated_at': session.updated_at,
+                    'description': session.description
+                })
+            }
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
@@ -486,6 +504,7 @@ def update_session(action=None):
                     connection.update({'$set': {
                         'sessions': sessions,
                         'status': 'accepted',
+                        "updated_at": datetime.datetime.now().isoformat(), 
                     }})
                 else:
                     sessions=[str(session_._id)]
@@ -496,7 +515,8 @@ def update_session(action=None):
                         'status': 'accepted',
                         'mentor': ObjectId(mentor_id),
                         'members': session_.members,
-                        'category': session_.category
+                        'category': session_.category,
+                        "updated_at": datetime.datetime.now().isoformat(), 
                     }})
                     connection_id = conn._id
                 session.update({'$set': { 
