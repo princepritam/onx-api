@@ -149,7 +149,7 @@ def get_mentor_connections():
         return jsonify({'error': message, 'error_status': True}), 404
     return jsonify({'connections': connection_list, 'error_status': False}), 200
 
-def fetch_messages(message_map, session_id):
+def fetch_messages(session_id):
     result = []
     messages = Message.objects.raw({'session': ObjectId(session_id)})
     for message in messages:
@@ -168,28 +168,17 @@ def fetch_messages(message_map, session_id):
             "type": message.type_, 
             "created_at": message.created_at
         })
-    new_map = { session_id: result }
-    return dict(**message_map, **new_map)
-
-@main.route("/connections/messages", methods=['POST'])
-def get_connection_messages():
-    try:
-        params = request.get_json()
-        conn_id = params['connection_id']
-        conn_obj = Connection.objects.get({ '_id' : ObjectId(conn_id) })
-        sessions = conn_obj.sessions
-        messages = reduce(fetch_messages, sessions, {})
-    except Exception as e:
-        message = 'connection does not exists.' if str(e) == '' else str(e)
-        return jsonify({'error': message, 'error_status': True}), 404
-    return jsonify({'messages': messages, 'error_status': False}), 200
+    return result
 
 def fetch_sessions(output, session_id):
     session_obj = Session.objects.get({'_id': ObjectId(session_id)})
+    messages = fetch_messages(session_id)
     session_map = {
         'session_id': session_id,
         'session_status': session_obj.status,
         'created_at': session_obj.created_at,
+        'end_time': session_obj.created_at,
+        'messages': messages
     }
     new_map = { session_id: session_map }
     return dict(**output, **new_map)
@@ -200,13 +189,11 @@ def get__connection():
         connection_id = request.get_json()['connection_id']
         connection = Connection.objects.get({'_id': ObjectId(connection_id)})
         sessions = connection.sessions
-        messages = reduce(fetch_messages, sessions, {})
         session_detail_map = reduce(fetch_sessions, sessions, {})
         # code.interact(local=dict(globals(), **locals()))
         student_id = connection.members[0]
         mentor_obj = connection.mentor
         student_obj = User.objects.get({'_id': ObjectId(student_id)})
-        # current_session = connection.current_session
         mentor = {
             "user_id": str(mentor_obj._id), 
             "nickname": mentor_obj.nickname, 
@@ -224,13 +211,11 @@ def get__connection():
         conn_obj = {
             'connection_id': connection_id,
             'status': connection.status,
-            # 'current_session': str(current_session._id),
             'sessions': session_detail_map,
             'student': student,
             'mentor': mentor,
-            'messages': messages
         }
     except Exception as e:
-        message = 'User does not exists.' if str(e) == '' else str(e)
+        message = 'Connection does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
     return jsonify({'connection': conn_obj, 'error_status': False}), 200
