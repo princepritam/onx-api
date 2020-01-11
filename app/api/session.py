@@ -38,6 +38,34 @@ def create_session():
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
 
+@main.route("/connection/continue", methods=['POST'])
+def create_connection_session():
+    create_params = {}
+    try:
+        connection_id = ObjectId(request.get_json()['connection_id'])
+        connection = Connection.objects.raw({'_id': connection_id})
+        mentor = connection.mentor
+        members = connection.members
+        category = connection.category
+        session_document = {
+            "mentor": mentor,
+            "members": members,
+            "category": category,
+            "status": "inactive",
+            "type": "single",
+            "created_at": datetime.datetime.now().isoformat()
+        }
+        Session.from_document(session_document).full_clean(exclude=None)
+        session = Session()
+        session.save(force_insert=True)
+        Session.objects.raw({'_id': session._id}).update({'$set': session_document})
+
+    except Exception as e:
+        message = 'User does not exists.' if str(e) == '' else str(e)
+        return jsonify({'error': message, 'error_status': True}), 200
+    return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
+
+
 
 @main.route("/session/schedule", methods=['POST'])
 def schedule_session():
