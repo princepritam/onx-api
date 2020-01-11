@@ -7,7 +7,6 @@ from app.models.session import *
 from app.models.connection import *
 from app.models.activity import *
 from app.models.message import *
-from threading import Timer
 from functools import reduce
 from . import app, socketio, emit, celery
 
@@ -37,6 +36,35 @@ def create_connection():
         message = 'Connection does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully created connection.', 'session_id': str(conn._id), 'error_status': False}), 201
+
+
+@main.route("/connection/continue", methods=['POST'])
+def create_connection_session():
+    create_params = {}
+    try:
+        connection_id = ObjectId(request.get_json()['connection_id'])
+        connection = Connection.objects.raw({'_id': connection_id})
+        mentor = connection.mentor
+        members = connection.members
+        category = connection.category
+        session_document = {
+            "mentor": mentor,
+            "members": members,
+            "category": category,
+            "status": "inactive",
+            "type": "single",
+            "created_at": datetime.datetime.now().isoformat()
+        }
+        Session.from_document(session_document).full_clean(exclude=None)
+        session = Session()
+        session.save(force_insert=True)
+        Session.objects.raw({'_id': session._id}).update({'$set': session_document})
+
+    except Exception as e:
+        message = 'User does not exists.' if str(e) == '' else str(e)
+        return jsonify({'error': message, 'error_status': True}), 200
+    return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
+
 
 @main.route("/connection/update", methods=['PATCH'])
 def update_connection():
@@ -277,14 +305,6 @@ def schedule_session():
 def schedule_session_job(session):
     session.update({'$set': {'status': 'accepted', 'updated_at': datetime.datetime.now().isoformat()}})     
     Connection.objects.raw({'_id': ObjectId(session.connection_id)}).update({'$set':{"status": 'accepted'}})
-    # Activity(
-    #     user_id= session.members[0],
-    #     session_id=str(session._id),
-    #     is_dynamic= True,
-    #     content= "Please start your session for " + session.category + ".",
-    #     created_at= datetime.datetime.now().isoformat()).save()
-    # socket_params["student_id"] = session.members[0]
-    # socket_params["mentor_id"] = str(session.mentor._id)
 
 @celery.task
 def create_notification(user_id,session):

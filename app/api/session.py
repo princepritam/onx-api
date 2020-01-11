@@ -38,77 +38,6 @@ def create_session():
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
 
-@main.route("/connection/continue", methods=['POST'])
-def create_connection_session():
-    create_params = {}
-    try:
-        connection_id = ObjectId(request.get_json()['connection_id'])
-        connection = Connection.objects.raw({'_id': connection_id})
-        mentor = connection.mentor
-        members = connection.members
-        category = connection.category
-        session_document = {
-            "mentor": mentor,
-            "members": members,
-            "category": category,
-            "status": "inactive",
-            "type": "single",
-            "created_at": datetime.datetime.now().isoformat()
-        }
-        Session.from_document(session_document).full_clean(exclude=None)
-        session = Session()
-        session.save(force_insert=True)
-        Session.objects.raw({'_id': session._id}).update({'$set': session_document})
-
-    except Exception as e:
-        message = 'User does not exists.' if str(e) == '' else str(e)
-        return jsonify({'error': message, 'error_status': True}), 200
-    return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
-
-
-
-# def end_session_on_timer(session_id, action):
-#     session_object_id = ObjectId(session_id)
-#     session = Session.objects.get({'_id': session_object_id })
-#     updater = Session.objects.raw({'_id': session_object_id })
-#     end_time = datetime.datetime.now()
-
-#     if action == 'end':
-#         seconds = (end_time - session.start_time).total_seconds()
-#         hours = int(seconds // 3600)
-#         minutes = int((seconds % 3600) // 60)
-#         secs = int(seconds % 60)
-#         active_duration = '{}:{}:{}'.format(hours, minutes, secs)
-#         updater.update({
-#             '$set': {
-#                 "end_time": end_time.isoformat(), 
-#                 "active_duration": active_duration,
-#                 "updated_at": end_time.isoformat(), 
-#                 'status': 'ended'
-#             }
-#         })
-#         Activity(
-#             user_id= session.members[0],
-#             session_id=str(session._id),
-#             is_dynamic= False,
-#             content= "Successfully Ended session for " + session.category + ".",
-#             created_at= end_time.isoformat()
-#         ).save()
-#     elif action == 'kill':
-#         updater.update({
-#             '$set': {
-#                 "updated_at": end_time.isoformat(), 
-#                 'status': 'lost'
-#             }
-#         })
-#         Activity(
-#             user_id= session.members[0],
-#             session_id=str(session._id),
-#             is_dynamic= False,
-#             content= "Your session request for " + session.category + " expired.",
-#             created_at= end_time.isoformat()
-#         ).save()
-
 @main.route("/sessions", methods=['GET'])
 def get_all_sessions():
     try:
@@ -491,20 +420,6 @@ def update_session(action=None):
 
             student_id = session_.members[0]
             socket_params["student_id"] = str(student_id)
-        # elif action == "accept" and session_.status == 'scheduled_inactive':
-        #     session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'scheduled_active'}})
-        #     scheduled_time = dateutil.parser.parse(session.scheduled_time)
-        #     current_time = datetime.datetime.now()
-        #     countdown_seconds = (scheduled_time - current_time).total_seconds()
-        #     schedule_session = schedule_session(session).apply_async(countdown=countdown_seconds)
-        #     Activity(
-        #         user_id= session_.members[0],
-        #         session_id=str(session_._id),
-        #         is_dynamic= True,
-        #         content= (mentor.nickname + " accepted your session for " + session_.category + ", and has been scheduled as per your request."),
-        #         created_at= datetime.datetime.now().isoformat()).save()        
-        #     student_id = session_.members[0]
-        #     socket_params["student_id"] = str(student_id)
         elif action == "kill" and session_.status == 'inactive':
             session.update({'$set': {"updated_at": datetime.datetime.now().isoformat(), 'status': 'lost'}})
         elif action == "schedule" and session_.status == 'scheduled_inactive':
