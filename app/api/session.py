@@ -54,7 +54,7 @@ def schedule_session():
             'created_at': current_time,
             'status': 'scheduled',
             'scheduled_time': scheduled_time,
-            'mentor': session_obj.mentor._id
+            'mentor': session_obj.mentor._id,
             'connection_id': session_obj.connection_id._id
         }
         Session.from_document(new_session_document).full_clean(exclude=None)
