@@ -177,7 +177,8 @@ def fetch_sessions(output, session_id):
         'session_id': session_id,
         'session_status': session_obj.status,
         'created_at': session_obj.created_at,
-        'end_time': session_obj.created_at,
+        'start_time': session_obj.start_time,
+        'end_time': session_obj.end_time,
         'messages': messages
     }
     new_map = { session_id: session_map }
@@ -214,6 +215,8 @@ def get__connection():
             'sessions': session_detail_map,
             'student': student,
             'mentor': mentor,
+            'scheduled_time': connection.scheduled_time,
+            'category': connection.category
         }
     except Exception as e:
         message = 'Connection does not exists.' if str(e) == '' else str(e)
