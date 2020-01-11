@@ -53,7 +53,6 @@ def schedule_session():
             'category': session_obj.category,
             'created_at': current_time,
             'status': 'scheduled',
-            'scheduled_time': scheduled_time,
             'mentor': session_obj.mentor._id,
             'connection_id': session_obj.connection_id._id
         }
@@ -63,6 +62,7 @@ def schedule_session():
         Session.objects.raw({'_id': session._id}).update({'$set': new_session_document})
         Connection.objects.raw({'_id': ObjectId(session.connection_id)}).update({'$set':{
             "status": 'scheduled',
+            'scheduled_time': scheduled_time,
             "sessions":session.connection_id.sessions.append(str(session._id))}})
     # code.interact(local=dict(globals(), **locals()))
         scheduled_time = dateutil.parser.parse(scheduled_time)
