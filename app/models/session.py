@@ -39,7 +39,7 @@ class Session(MongoModel):
     type_ = fields.CharField(required=False, choices=['single', 'multiple'], mongo_name='type')
     mentor = fields.ReferenceField(User, mongo_name='mentor', validators=[validate_mentor])
     members = fields.ListField(mongo_name='members', validators=[validate_users], required=False)
-    status = fields.CharField(choices=['scheduled_inactive', 'scheduled_active', 'active', 'accepted', 'inactive', 'ended', 'lost'], mongo_name='status', default='inactive')
+    status = fields.CharField(choices=['scheduled', 'active', 'accepted', 'inactive', 'ended', 'lost'], mongo_name='status', default='inactive')
     start_time = fields.DateTimeField(required=False, mongo_name='start_time')
     category = fields.CharField(mongo_name='category', required=False)
     description = fields.CharField(mongo_name='description')
