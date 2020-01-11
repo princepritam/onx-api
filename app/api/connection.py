@@ -207,7 +207,11 @@ def fetch_sessions(output, session_id):
         'created_at': session_obj.created_at,
         'start_time': session_obj.start_time,
         'end_time': session_obj.end_time,
-        'messages': messages
+        'messages': messages,
+        'user_rating': session_obj.user_rating,
+        'user_feedback': session_obj.user_feedback,
+        'mentor_rating': session_obj.mentor_rating,
+        'mentor_feedback': session_obj.mentor_feedback
     }
     new_map = { session_id: session_map }
     return dict(**output, **new_map)
