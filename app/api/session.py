@@ -304,7 +304,7 @@ def update_session_():
 def getConnection(session_obj, mentor_id):
     try:
         student_id = session_obj.members[0]
-        connection = Connection.objects.raw({'category': session_obj.category, 'mentor': ObjectId(mentor_id), 'members':  { '$all':[student_id] } })
+        connection = Connection.objects.get({'category': session_obj.category, 'mentor': ObjectId(mentor_id), 'members':  { '$all':[student_id] } })
     except Exception as e:
         connection = None
     return connection
@@ -385,7 +385,7 @@ def update_session(action=None):
                 if connection:
                     sessions = connection.sessions
                     sessions.append(str(session_._id))
-                    connection.update({'$set': {
+                    Connection.objects.raw({'_id': connection._id}).update({'$set': {
                         'sessions': sessions,
                         'status': 'accepted',
                         "updated_at": datetime.datetime.now().isoformat(), 
