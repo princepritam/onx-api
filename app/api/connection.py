@@ -284,7 +284,7 @@ def schedule_session():
         Session.objects.raw({'_id': session._id}).update({'$set': new_session_document})
         Connection.objects.raw({'_id': ObjectId(session.connection_id)}).update({'$set':{
             "status": 'scheduled',
-            'scheduled_time': scheduled_time,
+            'scheduled_time': scheduled_time.isoformat(),
             "sessions":conn.sessions.append(str(session._id))
         }})
         current_time = utc_iso_format(datetime.datetime.now())
