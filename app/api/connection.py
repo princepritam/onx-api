@@ -224,7 +224,7 @@ def get__connection():
         connection_id = request.get_json()['connection_id']
         connection = Connection.objects.get({'_id': ObjectId(connection_id)})
         sessions = connection.sessions
-        code.interact(local=dict(globals(), **locals()))
+        # code.interact(local=dict(globals(), **locals()))
         session_detail_map = reduce(fetch_sessions, sessions, {})
         student_id = connection.members[0]
         mentor_obj = connection.mentor
