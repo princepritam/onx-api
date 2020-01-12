@@ -391,6 +391,7 @@ def update_session(action=None):
                         "updated_at": datetime.datetime.now().isoformat(), 
                     }})
                 else:
+                    # code.interact(local=dict(globals(), **locals()))
                     sessions=[str(session_._id)]
                     conn = Connection()
                     conn.save()
@@ -403,12 +404,12 @@ def update_session(action=None):
                         "updated_at": datetime.datetime.now().isoformat(), 
                     }})
                     connection_id = conn._id
-                session.update({'$set': { 
-                    'connection_id': connection._id, 
-                    "updated_at": datetime.datetime.now().isoformat(), 
-                    'status': 'accepted', 
-                    "mentor": mentor._id
-                }})
+                    session.update({'$set': { 
+                        'connection_id': connection_id, 
+                        "updated_at": datetime.datetime.now().isoformat(), 
+                        'status': 'accepted', 
+                        "mentor": mentor._id
+                    }})
             else:
                 session.update({'$set': {
                     "updated_at": datetime.datetime.now().isoformat(), 
