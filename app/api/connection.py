@@ -205,8 +205,8 @@ def fetch_sessions(output, session_id):
     session_map = {
         'session_id': session_id,
         'session_status': session_obj.status,
-        'created_at': session_obj.created_at,
-        'updated_at': session_obj.updated_at,
+        'created_at': session_obj.created_at.isoformat(),
+        'updated_at': session_obj.updated_at.isoformat(),
         'start_time': session_obj.start_time,
         'end_time': session_obj.end_time,
         'messages': messages,
