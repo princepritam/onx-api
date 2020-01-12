@@ -175,7 +175,6 @@ def get_mentor_connections():
                 'student': student_details,
                 'category': connection.category,
                 'status': connection.status,
-                'scheduled_time': connection.scheduled_time.isoformat(),
                 'created_at': connection.created_at.isoformat(),
                 'updated_at': connection.updated_at.isoformat(),
             }

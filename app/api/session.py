@@ -318,7 +318,7 @@ def update_session(action=None):
         session_ = Session.objects.get({'_id': session_id})
         session = Session.objects.raw({'_id': session_id})
         socket_params = {'action': action, 'session_id': update_params['session_id'] }
-        
+        connection = getConnection(session_, mentor_id)
         if action == "start" and session_.status in ['accepted']:
             if update_params['student_id']:
                 student = User.objects.get({'_id': ObjectId(update_params['student_id'])})
@@ -380,7 +380,6 @@ def update_session(action=None):
             else:
                 raise ValidationError("Mentor id is required to accept a session.")
             if session_.category != "others" :
-                connection = getConnection(session_, mentor_id)
                 # code.interact(local=dict(globals(), **locals()))
                 if connection != None:
                     sessions = connection.sessions
@@ -439,4 +438,6 @@ def update_session(action=None):
     except Exception as e:
         message = 'Session does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
+    if connection != None:
+        return jsonify({'message': 'Successfully updated session.', 'connection_id': str(connection._id) 'error_status': False}), 202
     return jsonify({'message': 'Successfully updated session.', 'error_status': False}), 202
