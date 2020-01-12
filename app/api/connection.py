@@ -282,7 +282,7 @@ def schedule_session():
         session = Session()
         session.save(force_insert=True)
         Session.objects.raw({'_id': session._id}).update({'$set': new_session_document})
-        Connection.objects.raw({'_id': ObjectId(session.connection_id)}).update({'$set':{
+        Connection.objects.raw({'_id': ObjectId(connection_id)}).update({'$set':{
             "status": 'scheduled',
             'scheduled_time': scheduled_time.isoformat(),
             "sessions":conn.sessions.append(str(session._id))
