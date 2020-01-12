@@ -439,5 +439,5 @@ def update_session(action=None):
         message = 'Session does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
     if connection != None:
-        return jsonify({'message': 'Successfully updated session.', 'connection_id': str(connection._id) 'error_status': False}), 202
+        return jsonify({'message': 'Successfully updated session.', 'connection_id': str(connection._id), 'error_status': False}), 202
     return jsonify({'message': 'Successfully updated session.', 'error_status': False}), 202
