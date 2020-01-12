@@ -294,7 +294,7 @@ def schedule_session():
         countdown_seconds = (scheduled_time - current_time).total_seconds()
         schedule_session = schedule_session_job.apply_async([session], countdown=countdown_seconds)
         notifier_countdown_seconds = countdown_seconds - 7200
-        code.interact(local=dict(globals(), **locals()))
+        # code.interact(local=dict(globals(), **locals()))
         notify_mentor = create_notification.apply_async([session.members[0], session], countdown=notifier_countdown_seconds)
         notify_student = create_notification.apply_async([str(session.mentor._id), session], countdown=notifier_countdown_seconds)
         Activity(
