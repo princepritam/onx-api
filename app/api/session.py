@@ -318,8 +318,7 @@ def update_session(action=None):
         session_ = Session.objects.get({'_id': session_id})
         session = Session.objects.raw({'_id': session_id})
         socket_params = {'action': action, 'session_id': update_params['session_id'] }
-        mentor_id = update_params["mentor_id"]
-        connection = getConnection(session_, mentor_id)
+        connection = None
         if action == "start" and session_.status in ['accepted']:
             if update_params['student_id']:
                 student = User.objects.get({'_id': ObjectId(update_params['student_id'])})
@@ -381,6 +380,7 @@ def update_session(action=None):
             else:
                 raise ValidationError("Mentor id is required to accept a session.")
             if session_.category != "others" :
+                connection = getConnection(session_, mentor_id)
                 # code.interact(local=dict(globals(), **locals()))
                 if connection != None:
                     sessions = connection.sessions
@@ -411,6 +411,7 @@ def update_session(action=None):
                         "created_at": datetime.datetime.now().isoformat()
                     }})
                     connection_id = conn._id
+                    connection = conn
                     session.update({'$set': { 
                         'connection_id': connection_id, 
                         "updated_at": datetime.datetime.now().isoformat(), 
