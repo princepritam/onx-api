@@ -36,6 +36,6 @@ class Message(MongoModel):
         if not self.session:
             raise ValidationError("Given Session ID does not exists.")
         else:
-            if self.session.status != 'active':
-                raise ValidationError("Session is not active.")
+            if self.session.status not in  ['active', 'accepted']:
+                raise ValidationError("Session is not active/accepted.")
         return True

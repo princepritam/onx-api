@@ -318,6 +318,7 @@ def update_session(action=None):
         session_ = Session.objects.get({'_id': session_id})
         session = Session.objects.raw({'_id': session_id})
         socket_params = {'action': action, 'session_id': update_params['session_id'] }
+        mentor_id = update_params["mentor_id"]
         connection = getConnection(session_, mentor_id)
         if action == "start" and session_.status in ['accepted']:
             if update_params['student_id']:
