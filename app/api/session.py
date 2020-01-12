@@ -382,7 +382,7 @@ def update_session(action=None):
             if session_.category != "others" :
                 connection = getConnection(session_, mentor_id)
                 # code.interact(local=dict(globals(), **locals()))
-                if connection:
+                if connection != None:
                     sessions = connection.sessions
                     sessions.append(str(session_._id))
                     Connection.objects.raw({'_id': connection._id}).update({'$set': {
