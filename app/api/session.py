@@ -390,6 +390,12 @@ def update_session(action=None):
                         'status': 'accepted',
                         "updated_at": datetime.datetime.now().isoformat(), 
                     }})
+                    session.update({'$set': { 
+                        'connection_id': connection._id, 
+                        "updated_at": datetime.datetime.now().isoformat(), 
+                        'status': 'accepted', 
+                        "mentor": mentor._id
+                    }})
                 else:
                     # code.interact(local=dict(globals(), **locals()))
                     sessions=[str(session_._id)]
