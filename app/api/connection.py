@@ -324,9 +324,9 @@ def create_notification(user_id,session):
         created_at= datetime.datetime.now().isoformat()
     ).save()
 def utc_iso_format(dt):
-     try:
-         utc = dt + dt.utcoffset()
+    try:
+        utc = dt + dt.utcoffset()
     except TypeError as e:
-         utc = dt
+        utc = dt
     isostring = datetime.datetime.strftime(utc, '%Y-%m-%dT%H:%M:%S.{0}Z')
     return dateutil.parser.parse(isostring.format(int(round(utc.microsecond/1000.0))))
