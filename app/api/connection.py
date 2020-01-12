@@ -282,16 +282,19 @@ def schedule_session():
         session = Session()
         session.save(force_insert=True)
         Session.objects.raw({'_id': session._id}).update({'$set': new_session_document})
+
+        sessions = conn.sessions
+        sessions.append(str(session._id))
         Connection.objects.raw({'_id': ObjectId(connection_id)}).update({'$set':{
             "status": 'scheduled',
             'scheduled_time': scheduled_time.isoformat(),
-            "sessions":conn.sessions.append(str(session._id))
+            "sessions": sessions
         }})
         current_time = utc_iso_format(datetime.datetime.now())
         countdown_seconds = (scheduled_time - current_time).total_seconds()
-        # code.interact(local=dict(globals(), **locals()))
         schedule_session = schedule_session_job.apply_async([session], countdown=countdown_seconds)
         notifier_countdown_seconds = countdown_seconds - 7200
+        code.interact(local=dict(globals(), **locals()))
         notify_mentor = create_notification.apply_async([session.members[0], session], countdown=notifier_countdown_seconds)
         notify_student = create_notification.apply_async([str(session.mentor._id), session], countdown=notifier_countdown_seconds)
         Activity(
