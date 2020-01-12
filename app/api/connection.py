@@ -137,15 +137,17 @@ def get_user_connections():
                 'uploaded_photo_url': mentor.uploaded_photo_url
             } if mentor else {}
 
-            connection_list.append({
+            conn_obj = {
                 'connection_id': str(connection._id),
                 'mentor': mentor_details,
                 'category': connection.category,
                 'status': connection.status,
-                'scheduled_time': connection.scheduled_time.isoformat(),
                 'created_at': connection.created_at.isoformat(),
                 'updated_at': connection.updated_at.isoformat(),
-            })
+            }
+            if connection.scheduled_time != None:
+                conn_obj["scheduled_time"] = connection.scheduled_time.isoformat()
+            connection_list.append(conn_obj)
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
@@ -168,7 +170,7 @@ def get_mentor_connections():
                 'email': student.email, 
                 'uploaded_photo_url': student.uploaded_photo_url
             } if student else {}
-            connection_list.append({
+            conn_obj = {
                 'connection_id': str(connection._id),
                 'student': student_details,
                 'category': connection.category,
@@ -176,7 +178,10 @@ def get_mentor_connections():
                 'scheduled_time': connection.scheduled_time.isoformat(),
                 'created_at': connection.created_at.isoformat(),
                 'updated_at': connection.updated_at.isoformat(),
-            })
+            }
+            if connection.scheduled_time != None:
+                conn_obj["scheduled_time"] = connection.scheduled_time.isoformat()
+            connection_list.append(conn_obj)
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
@@ -254,9 +259,10 @@ def get__connection():
             'sessions': session_detail_map,
             'student': student,
             'mentor': mentor,
-            'scheduled_time': connection.scheduled_time,
             'category': connection.category
         }
+        if connection.scheduled_time != None:
+            conn_obj["scheduled_time"] = connection.scheduled_time.isoformat()
     except Exception as e:
         message = 'Connection does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404
