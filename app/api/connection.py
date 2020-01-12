@@ -206,6 +206,7 @@ def fetch_sessions(output, session_id):
         'session_id': session_id,
         'session_status': session_obj.status,
         'created_at': session_obj.created_at,
+        'updated_at': session_obj.updated_at,
         'start_time': session_obj.start_time,
         'end_time': session_obj.end_time,
         'messages': messages,
