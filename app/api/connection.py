@@ -43,7 +43,8 @@ def create_connection_session():
     create_params = {}
     try:
         connection_id = ObjectId(request.get_json()['connection_id'])
-        connection = Connection.objects.raw({'_id': connection_id})
+        connection = Connection.objects.get({'_id': connection_id})
+        # code.interact(local=dict(globals(), **locals()))
         mentor = connection.mentor
         members = connection.members
         category = connection.category
