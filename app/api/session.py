@@ -408,6 +408,7 @@ def update_session(action=None):
                         'members': session_.members,
                         'category': session_.category,
                         "updated_at": datetime.datetime.now().isoformat(), 
+                        "created_at": datetime.datetime.now().isoformat()
                     }})
                     connection_id = conn._id
                     session.update({'$set': { 

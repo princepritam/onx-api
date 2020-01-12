@@ -142,7 +142,9 @@ def get_user_connections():
                 'mentor': mentor_details,
                 'category': connection.category,
                 'status': connection.status,
-                'scheduled_time': connection.scheduled_time,
+                'scheduled_time': connection.scheduled_time.isoformat(),
+                'created_at': connection.created_at.isoformat(),
+                'updated_at': connection.updated_at.isoformat(),
             })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
@@ -171,7 +173,9 @@ def get_mentor_connections():
                 'student': student_details,
                 'category': connection.category,
                 'status': connection.status,
-                'scheduled_time': connection.scheduled_time,
+                'scheduled_time': connection.scheduled_time.isoformat(),
+                'created_at': connection.created_at.isoformat(),
+                'updated_at': connection.updated_at.isoformat(),
             })
     except Exception as e:
         message = 'User does not exists.' if str(e) == '' else str(e)
@@ -195,7 +199,7 @@ def fetch_messages(session_id):
             "sender": sender_details,
             "content": message.content, 
             "type": message.type_, 
-            "created_at": message.created_at
+            "created_at": message.created_at.isoformat()
         })
     return result
 
@@ -205,8 +209,8 @@ def fetch_sessions(output, session_id):
     session_map = {
         'session_id': session_id,
         'session_status': session_obj.status,
-        'created_at': session_obj.created_at,
-        'updated_at': session_obj.updated_at,
+        'created_at': session_obj.created_at.isoformat(),
+        'updated_at': session_obj.updated_at.isoformat(),
         'start_time': session_obj.start_time,
         'end_time': session_obj.end_time,
         'messages': messages,
