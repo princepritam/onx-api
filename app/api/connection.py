@@ -214,6 +214,7 @@ def fetch_sessions(output, session_id):
         'mentor_rating': session_obj.mentor_rating,
         'mentor_feedback': session_obj.mentor_feedback
     }
+    # code.interact(local=dict(globals(), **locals()))
     new_map = { session_id: session_map }
     return dict(**output, **new_map)
 
@@ -223,8 +224,8 @@ def get__connection():
         connection_id = request.get_json()['connection_id']
         connection = Connection.objects.get({'_id': ObjectId(connection_id)})
         sessions = connection.sessions
+        code.interact(local=dict(globals(), **locals()))
         session_detail_map = reduce(fetch_sessions, sessions, {})
-        # code.interact(local=dict(globals(), **locals()))
         student_id = connection.members[0]
         mentor_obj = connection.mentor
         student_obj = User.objects.get({'_id': ObjectId(student_id)})
@@ -272,7 +273,7 @@ def schedule_session():
             'created_at': current_time,
             'status': 'scheduled',
             'mentor': conn.mentor._id,
-            'connection_id': connection_id
+            'connection_id': ObjectId(connection_id)
         }
         Session.from_document(new_session_document).full_clean(exclude=None)
         session = Session()
