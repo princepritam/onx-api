@@ -404,7 +404,7 @@ def update_session(action=None):
                     }})
                     connection_id = conn._id
                 session.update({'$set': { 
-                    'connection_id': connection_id, 
+                    'connection_id': connection._id, 
                     "updated_at": datetime.datetime.now().isoformat(), 
                     'status': 'accepted', 
                     "mentor": mentor._id
