@@ -264,6 +264,9 @@ def schedule_session():
         params = request.get_json()
         connection_id = params['connection_id']
         scheduled_time = params['scheduled_time']
+        scheduled_time = dateutil.parser.parse(scheduled_time)
+        if scheduled_time <= utc_iso_format(datetime.datetime.now()):
+            raise ValidationError("Scheduled datetime cannot be prior to current datetime. ")
         current_time = datetime.datetime.now().isoformat()
         conn = Connection.objects.get({'_id': ObjectId(connection_id) })
         new_session_document = {
@@ -284,8 +287,7 @@ def schedule_session():
             'scheduled_time': scheduled_time,
             "sessions":conn.sessions.append(str(session._id))
         }})
-        scheduled_time = dateutil.parser.parse(scheduled_time)
-        current_time = datetime.datetime.now()
+        current_time = utc_iso_format(datetime.datetime.now())
         countdown_seconds = (scheduled_time - current_time).total_seconds()
         # code.interact(local=dict(globals(), **locals()))
         schedule_session = schedule_session_job.apply_async([session], countdown=countdown_seconds)
@@ -321,3 +323,10 @@ def create_notification(user_id,session):
         content=("Your session will start in 2 hours for " + session.category + "."),
         created_at= datetime.datetime.now().isoformat()
     ).save()
+def utc_iso_format(dt):
+     try:
+         utc = dt + dt.utcoffset()
+    except TypeError as e:
+         utc = dt
+    isostring = datetime.datetime.strftime(utc, '%Y-%m-%dT%H:%M:%S.{0}Z')
+    return dateutil.parser.parse(isostring.format(int(round(utc.microsecond/1000.0))))
