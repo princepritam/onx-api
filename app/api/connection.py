@@ -49,7 +49,7 @@ def create_connection_session():
         members = connection.members
         category = connection.category
         session_document = {
-            "mentor": mentor,
+            "mentor": mentor._id,
             "members": members,
             "category": category,
             "status": "inactive",
