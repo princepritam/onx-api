@@ -332,11 +332,10 @@ def update_session(action=None):
             mentor_sessions = session_.mentor.sessions + 1
             student_updater.update({'$set':{"sessions": student_sessions}})
             mentor_updater.update({'$set':{"sessions": mentor_sessions}})
-            if session_.category != "Share your thoughts" :
-                Connection.objects.raw({ '_id': session_.connection_id._id }).update({'$set': {
-                    "updated_at": datetime.datetime.now().isoformat(),
-                    'status': 'active'
-                }})
+            Connection.objects.raw({ '_id': session_.connection_id._id }).update({'$set': {
+                "updated_at": datetime.datetime.now().isoformat(),
+                'status': 'active'
+            }})
 
             session.update({'$set': {
                 "start_time": datetime.datetime.now().isoformat(),
@@ -358,11 +357,10 @@ def update_session(action=None):
             minutes = int((seconds % 3600) // 60)
             secs = int(seconds % 60)
             active_duration = '{}:{}:{}'.format(hours, minutes, secs)
-            if session_.category != "Share your thoughts" : 
-                Connection.objects.raw({ '_id': session_.connection_id._id }).update({'$set': {
-                    "updated_at": datetime.datetime.now().isoformat(),
-                    'status': 'ended'
-                }})
+            Connection.objects.raw({ '_id': session_.connection_id._id }).update({'$set': {
+                "updated_at": datetime.datetime.now().isoformat(),
+                'status': 'ended'
+            }})
 
             session.update({'$set': {"end_time": end_time.isoformat(), "active_duration": active_duration,
                                      "updated_at": datetime.datetime.now().isoformat(), 'status': 'ended'}})
@@ -379,45 +377,44 @@ def update_session(action=None):
                     raise ValidationError("Given mentor id is incorrect, role of the user is not 'mentor'.")
             else:
                 raise ValidationError("Mentor id is required to accept a session.")
-            if session_.category != "Share your thoughts" :
                 connection = getConnection(session_, mentor_id)
                 # code.interact(local=dict(globals(), **locals()))
-                if connection != None:
-                    sessions = connection.sessions
-                    sessions.append(str(session_._id))
-                    Connection.objects.raw({'_id': connection._id}).update({'$set': {
-                        'sessions': sessions,
-                        'status': 'accepted',
-                        "updated_at": datetime.datetime.now().isoformat(), 
-                    }})
-                    session.update({'$set': { 
-                        'connection_id': connection._id, 
-                        "updated_at": datetime.datetime.now().isoformat(), 
-                        'status': 'accepted', 
-                        "mentor": mentor._id
-                    }})
-                else:
-                    # code.interact(local=dict(globals(), **locals()))
-                    sessions=[str(session_._id)]
-                    conn = Connection()
-                    conn.save()
-                    Connection.objects.raw({ '_id': conn._id}).update({'$set': {
-                        'sessions': sessions,
-                        'status': 'accepted',
-                        'mentor': ObjectId(mentor_id),
-                        'members': session_.members,
-                        'category': session_.category,
-                        "updated_at": datetime.datetime.now().isoformat(), 
-                        "created_at": datetime.datetime.now().isoformat()
-                    }})
-                    connection_id = conn._id
-                    connection = conn
-                    session.update({'$set': { 
-                        'connection_id': connection_id, 
-                        "updated_at": datetime.datetime.now().isoformat(), 
-                        'status': 'accepted', 
-                        "mentor": mentor._id
-                    }})
+            if connection != None:
+                sessions = connection.sessions
+                sessions.append(str(session_._id))
+                Connection.objects.raw({'_id': connection._id}).update({'$set': {
+                    'sessions': sessions,
+                    'status': 'accepted',
+                    "updated_at": datetime.datetime.now().isoformat(), 
+                }})
+                session.update({'$set': { 
+                    'connection_id': connection._id, 
+                    "updated_at": datetime.datetime.now().isoformat(), 
+                    'status': 'accepted', 
+                    "mentor": mentor._id
+                }})
+            else:
+                # code.interact(local=dict(globals(), **locals()))
+                sessions=[str(session_._id)]
+                conn = Connection()
+                conn.save()
+                Connection.objects.raw({ '_id': conn._id}).update({'$set': {
+                    'sessions': sessions,
+                    'status': 'accepted',
+                    'mentor': ObjectId(mentor_id),
+                    'members': session_.members,
+                    'category': session_.category,
+                    "updated_at": datetime.datetime.now().isoformat(), 
+                    "created_at": datetime.datetime.now().isoformat()
+                }})
+                connection_id = conn._id
+                connection = conn
+                session.update({'$set': { 
+                    'connection_id': connection_id, 
+                    "updated_at": datetime.datetime.now().isoformat(), 
+                    'status': 'accepted', 
+                    "mentor": mentor._id
+                }})
             else:
                 session.update({'$set': {
                     "updated_at": datetime.datetime.now().isoformat(), 
