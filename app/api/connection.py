@@ -310,10 +310,10 @@ def schedule_session():
             notify_mentor = create_notification.apply_async([session.members[0], str(session._id)], countdown=notifier_countdown_seconds)
             notify_student = create_notification.apply_async([str(session.mentor._id), str(session._id)], countdown=notifier_countdown_seconds)
         Activity(
-            user_id= session_obj.members[0],
+            user_id= session.members[0],
             session_id=str(session._id),
             is_dynamic=False,
-            content=("You successfully scheduled a new session for " + session_obj.category + "."),
+            content=("You successfully scheduled a new session for " + session.category + "."),
             created_at= current_time
         ).save()
 
@@ -327,8 +327,9 @@ def schedule_session():
 @celery.task
 def schedule_session_job(session_id):
     session = Session.objects.raw({'_id': ObjectId(session_id)})
-    session.update({'$set': {'status': 'accepted', 'updated_at': datetime.datetime.now().isoformat()}})     
-    Connection.objects.raw({'_id': ObjectId(session.connection_id)}).update({'$set':{"status": 'accepted'}})
+    session.update({'$set': {'status': 'accepted', 'updated_at': datetime.datetime.now().isoformat()}})
+    session_obj = Session.objects.get({'_id': ObjectId(session_id)})     
+    Connection.objects.raw({'_id': session_obj.connection_id._id}).update({'$set':{"status": 'accepted'}})
 
 @celery.task
 def create_notification(user_id,session_id):
