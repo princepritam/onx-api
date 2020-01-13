@@ -285,7 +285,7 @@ def schedule_session():
             'category': conn.category,
             'created_at': current_time,
             'status': 'scheduled',
-            'mentor': conn.mentor._id,
+            'mentor': str(conn.mentor._id),
             'connection_id': ObjectId(connection_id)
         }
         Session.from_document(new_session_document).full_clean(exclude=None)
@@ -310,7 +310,7 @@ def schedule_session():
         Activity(
             user_id= session_obj.members[0],
             session_id=str(session._id),
-            is_dynamic=True,
+            is_dynamic=False,
             content=("You successfully scheduled a new session for " + session_obj.category + "."),
             created_at= current_time
         ).save()
