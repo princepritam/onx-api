@@ -303,11 +303,12 @@ def schedule_session():
         }})
         current_time = utc_iso_format(datetime.datetime.now())
         countdown_seconds = (scheduled_time - current_time).total_seconds()
-        schedule_session = schedule_session_job.apply_async([session], countdown=countdown_seconds)
-        notifier_countdown_seconds = countdown_seconds - 7200
-        # code.interact(local=dict(globals(), **locals()))
-        notify_mentor = create_notification.apply_async([session.members[0], session], countdown=notifier_countdown_seconds)
-        notify_student = create_notification.apply_async([str(session.mentor._id), session], countdown=notifier_countdown_seconds)
+        schedule_session = schedule_session_job.apply_async([str(session._id)], countdown=countdown_seconds)
+        if countdown_seconds <= 7200:
+            notifier_countdown_seconds = countdown_seconds - 7200
+            # code.interact(local=dict(globals(), **locals()))
+            notify_mentor = create_notification.apply_async([session.members[0], str(session._id)], countdown=notifier_countdown_seconds)
+            notify_student = create_notification.apply_async([str(session.mentor._id), str(session._id)], countdown=notifier_countdown_seconds)
         Activity(
             user_id= session_obj.members[0],
             session_id=str(session._id),
@@ -319,17 +320,19 @@ def schedule_session():
         socketio.emit('session', {'action': 'create', 'session_id': str(session._id)})
         
     except Exception as e:
-        message = 'User does not exists.' if str(e) == '' else str(e)
+        message = 'Connection does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
     return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
 
 @celery.task
-def schedule_session_job(session):
+def schedule_session_job(session_id):
+    session = Session.objects.raw({'_id': ObjectId(session_id)})
     session.update({'$set': {'status': 'accepted', 'updated_at': datetime.datetime.now().isoformat()}})     
     Connection.objects.raw({'_id': ObjectId(session.connection_id)}).update({'$set':{"status": 'accepted'}})
 
 @celery.task
-def create_notification(user_id,session):
+def create_notification(user_id,session_id):
+    session = Session.objects.get({'_id': ObjectId(session_id)})
     Activity(
         user_id= user_id,
         session_id=str(session._id),
