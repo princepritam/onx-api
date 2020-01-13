@@ -377,8 +377,8 @@ def update_session(action=None):
                     raise ValidationError("Given mentor id is incorrect, role of the user is not 'mentor'.")
             else:
                 raise ValidationError("Mentor id is required to accept a session.")
-                connection = getConnection(session_, mentor_id)
-                # code.interact(local=dict(globals(), **locals()))
+            connection = getConnection(session_, mentor_id)
+            # code.interact(local=dict(globals(), **locals()))
             if connection != None:
                 sessions = connection.sessions
                 sessions.append(str(session_._id))
@@ -415,12 +415,7 @@ def update_session(action=None):
                     'status': 'accepted', 
                     "mentor": mentor._id
                 }})
-            else:
-                session.update({'$set': {
-                    "updated_at": datetime.datetime.now().isoformat(), 
-                    'status': 'accepted', 
-                    "mentor": mentor._id
-                }})
+
 
             Activity(user_id= session_.members[0], session_id=str(session_._id), is_dynamic= False, content= (mentor.nickname + " accepted your session for " + session_.category + "."), created_at= datetime.datetime.now().isoformat()).save()
 
