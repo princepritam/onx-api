@@ -185,7 +185,7 @@ def get_requested_sessions():
         user_id = request.get_json()['user_id']
         mentor = User.objects.get({'_id': ObjectId(user_id)})
         preferences = mentor.preferences.copy()
-        preferences.append('others')
+        preferences.append('Share your thoughts')
         sessions_list = []
         # code.interact(local=dict(globals(), **locals()))
         for session in Session.objects.raw({'$or': [{'status': {'$in':['inactive']}, 'category': {'$in': preferences}},
@@ -332,7 +332,7 @@ def update_session(action=None):
             mentor_sessions = session_.mentor.sessions + 1
             student_updater.update({'$set':{"sessions": student_sessions}})
             mentor_updater.update({'$set':{"sessions": mentor_sessions}})
-            if session_.category != "others" :
+            if session_.category != "Share your thoughts" :
                 Connection.objects.raw({ '_id': session_.connection_id._id }).update({'$set': {
                     "updated_at": datetime.datetime.now().isoformat(),
                     'status': 'active'
@@ -358,7 +358,7 @@ def update_session(action=None):
             minutes = int((seconds % 3600) // 60)
             secs = int(seconds % 60)
             active_duration = '{}:{}:{}'.format(hours, minutes, secs)
-            if session_.category != "others" : 
+            if session_.category != "Share your thoughts" : 
                 Connection.objects.raw({ '_id': session_.connection_id._id }).update({'$set': {
                     "updated_at": datetime.datetime.now().isoformat(),
                     'status': 'ended'
@@ -379,7 +379,7 @@ def update_session(action=None):
                     raise ValidationError("Given mentor id is incorrect, role of the user is not 'mentor'.")
             else:
                 raise ValidationError("Mentor id is required to accept a session.")
-            if session_.category != "others" :
+            if session_.category != "Share your thoughts" :
                 connection = getConnection(session_, mentor_id)
                 # code.interact(local=dict(globals(), **locals()))
                 if connection != None:
