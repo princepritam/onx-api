@@ -284,6 +284,7 @@ def schedule_session():
             'members': conn.members,
             'category': conn.category,
             'created_at': current_time,
+            'updated_at': current_time,
             'status': 'scheduled',
             'mentor': str(conn.mentor._id),
             'connection_id': ObjectId(connection_id)
