@@ -304,7 +304,7 @@ def schedule_session():
         current_time = utc_iso_format(datetime.datetime.now())
         countdown_seconds = (scheduled_time - current_time).total_seconds()
         schedule_session = schedule_session_job.apply_async([str(session._id)], countdown=countdown_seconds)
-        if countdown_seconds <= 7200:
+        if not countdown_seconds <= 7200:
             notifier_countdown_seconds = countdown_seconds - 7200
             # code.interact(local=dict(globals(), **locals()))
             notify_mentor = create_notification.apply_async([session.members[0], str(session._id)], countdown=notifier_countdown_seconds)
