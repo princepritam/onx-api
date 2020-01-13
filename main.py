@@ -11,7 +11,7 @@ app.config['SECRET_KEY'] = 'unxunxunx'
 # Health check
 @app.route("/ping", methods=['GET'])
 def home():
-    return 'Hello! Your app is up and running.'
+    return 'Hello!  app is up and running.'
 
 @socketio.on('custom')
 def handle_my_custom_event(json):
