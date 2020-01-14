@@ -16,7 +16,7 @@ def create_message():
         create_params['created_at'] = datetime.datetime.now().isoformat()
         create_params["sender"] = ObjectId(params["sender_id"])
         create_params["session"] = ObjectId(params["session_id"])
-        create_params["message_type"] = params["type_"]
+        create_params["message_type"] = params["type"]
         create_params["content"] = params["content"]
         Message.from_document(create_params).full_clean(exclude=None)
         message = Message()
