@@ -23,16 +23,9 @@ def create_message():
         # code.interact(local=dict(globals(), **locals()))
         message.save()
         Message.objects.raw({'_id': message._id}).update({'$set': create_params})
-        socket_params = {
-            "sender_id": params["sender_id"],
-            "session_id": params["session_id"],
-            "content": params["content"],
-            "sender_id": params["sender_id"],
-            "created_at": create_params["created_at"]
-        }
-        socketio.emit('chat-' + socket_params['session_id'], socket_params)
+        socketio.emit('chat-' + socket_params['session_id'], params)
         socket_params['message_id'] = str(message._id)
-        socketio.emit('chat', socket_params)
+        socketio.emit('chat', params)
     except Exception as e:
         return jsonify({"error": str(e), 'error_status': True}), 422
     return jsonify({'message': 'Successfully created a message.', 'error_status': False}), 201
