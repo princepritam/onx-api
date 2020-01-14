@@ -16,12 +16,14 @@ def create_message():
         create_params['created_at'] = datetime.datetime.now().isoformat()
         create_params["sender"] = ObjectId(params["sender_id"])
         create_params["session"] = ObjectId(params["session_id"])
-        create_params["message_type"] = ObjectId(params["type_"])
+        create_params["message_type"] = params["type_"]
+        create_params["content"] = params["content"]
         Message.from_document(create_params).full_clean(exclude=None)
         message = Message()
-        message.save(force_insert=True)
+        # code.interact(local=dict(globals(), **locals()))
+        message.save()
         Message.objects.raw({'_id': message._id}).update({'$set': create_params})
-        socketio.emit('chat-' + create_params['session_id'], create_params)
+        socketio.emit('chat-' + params['session_id'], create_params)
         create_params['message_id'] = str(message._id)
         socketio.emit('chat', create_params)
     except Exception as e:
