@@ -202,7 +202,7 @@ def fetch_messages(session_id):
             "session_id": str(message.session._id), 
             "sender": sender_details,
             "content": message.content, 
-            "type": message.type_, 
+            "type": message.message_type, 
             "created_at": message.created_at.isoformat()
         })
     return result
@@ -210,6 +210,7 @@ def fetch_messages(session_id):
 def fetch_sessions(output, session_id):
     session_obj = Session.objects.get({'_id': ObjectId(session_id)})
     messages = fetch_messages(session_id)
+    # code.interact(local=dict(globals(), **locals()))
     session_map = {
         'session_id': session_id,
         'session_status': session_obj.status,
@@ -315,7 +316,7 @@ def schedule_session():
             notify_mentor = create_notification.apply_async([session.members[0], str(session._id)], countdown=notifier_countdown_seconds)
             notify_student = create_notification.apply_async([str(session.mentor._id), str(session._id)], countdown=notifier_countdown_seconds)
         Activity(
-            user_id= session.members[0],
+            user_id= str(session.mentor._id),
             session_id=str(session._id),
             is_dynamic=False,
             content=("You successfully scheduled a new session for " + session.category + "."),
@@ -327,7 +328,7 @@ def schedule_session():
     except Exception as e:
         message = 'Connection does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 200
-    return jsonify({'message': 'Successfully created session.', 'session_id': str(session._id), 'error_status': False}), 201
+    return jsonify({'message': 'Successfully scheduled session.', 'session_id': str(session._id), 'error_status': False}), 201
 
 @celery.task
 def schedule_session_job(session_id):
