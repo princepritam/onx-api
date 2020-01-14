@@ -18,7 +18,7 @@ def create_message():
         message.save(force_insert=True)
         Message.objects.raw({'_id': message._id}).update({'$set': create_params})
         socketio.emit('chat-' + create_params['session_id'], create_params)
-        create_params['sessage_id'] = str(message._id)
+        create_params['message_id'] = str(message._id)
         socketio.emit('chat', create_params)
     except Exception as e:
         return jsonify({"error": str(e), 'error_status': True}), 200
@@ -46,7 +46,7 @@ def get_messages():
             sender_details = {"user_id": str(
                 user._id), "name": user.name, "email": user.email, "role": user.role}
             result.append({"message_id": str(message._id), "session_id": str(message.session._id), "sender": sender_details,
-                           "content": message.content, "type": message.type_, "created_at": message.created_at})
+                           "content": message.content, "type": message.type_, "created_at": message.created_at.isoformat()})
     except Exception as e:
         message = 'Session does not exists.' if str(e) == '' else str(e)
         return jsonify({'error': message, 'error_status': True}), 404

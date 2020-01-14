@@ -258,7 +258,9 @@ def get__connection():
             'sessions': session_detail_map,
             'student': student,
             'mentor': mentor,
-            'category': connection.category
+            'category': connection.category,
+            "created_at": connection.created_at.isoformat(),
+            "updated_at": connection.updated_at.isoformat()
         }
         if connection.scheduled_time != None:
             conn_obj["scheduled_time"] = connection.scheduled_time.isoformat()
@@ -273,12 +275,12 @@ def schedule_session():
     try:
         params = request.get_json()
         connection_id = params['connection_id']
+        conn = Connection.objects.get({'_id': ObjectId(connection_id) })
         scheduled_time = params['scheduled_time']
         scheduled_time = dateutil.parser.parse(scheduled_time)
         if scheduled_time <= utc_iso_format(datetime.datetime.now()):
             raise ValidationError("Scheduled datetime cannot be prior to current datetime. ")
         current_time = datetime.datetime.now().isoformat()
-        conn = Connection.objects.get({'_id': ObjectId(connection_id) })
         new_session_document = {
             'type_': 'single',
             'members': conn.members,
@@ -299,8 +301,11 @@ def schedule_session():
         Connection.objects.raw({'_id': ObjectId(connection_id)}).update({'$set':{
             "status": 'scheduled',
             'scheduled_time': scheduled_time.isoformat(),
+            "updated_at": datetime.datetime.now().isoformat(),
             "sessions": sessions
         }})
+        # code.interact(local=dict(globals(), **locals()))
+        session = Session.objects.get({"_id": session._id}) # TO-DO check the former session object not working.
         current_time = utc_iso_format(datetime.datetime.now())
         countdown_seconds = (scheduled_time - current_time).total_seconds()
         schedule_session = schedule_session_job.apply_async([str(session._id)], countdown=countdown_seconds)
