@@ -23,8 +23,7 @@ def create_message():
         # code.interact(local=dict(globals(), **locals()))
         message.save()
         Message.objects.raw({'_id': message._id}).update({'$set': create_params})
-        socketio.emit('chat-' + socket_params['session_id'], params)
-        socket_params['message_id'] = str(message._id)
+        socketio.emit('chat-' + params['session_id'], params)
         socketio.emit('chat', params)
     except Exception as e:
         return jsonify({"error": str(e), 'error_status': True}), 422
