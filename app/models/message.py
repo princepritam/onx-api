@@ -5,10 +5,10 @@ from bson import ObjectId
 import code
 from app.models.session import *
 class Message(MongoModel):
-    session = fields.ReferenceField(Session, required=True, mongo_name="session")
-    sender = fields.ReferenceField(User, required=True, mongo_name="sender")
+    session = fields.ReferenceField(Session, required=False, mongo_name="session")
+    sender = fields.ReferenceField(User, required=False, mongo_name="sender")
     content = fields.CharField(required=False, mongo_name="content")
-    message_type = fields.CharField(required=True, mongo_name="message_type", choices=['text', 'image'])
+    message_type = fields.CharField(required=False, mongo_name="message_type", choices=['text', 'image'])
     created_at = fields.DateTimeField(required=True, mongo_name="created_at")
 
     class Meta:
