@@ -27,7 +27,7 @@ def create_message():
         create_params['message_id'] = str(message._id)
         socketio.emit('chat', create_params)
     except Exception as e:
-        return jsonify({"error": str(e), 'error_status': True}), 200
+        return jsonify({"error": str(e), 'error_status': True}), 422
     return jsonify({'message': 'Successfully created a message.', 'error_status': False}), 201
 
 @main.route("/message/typing", methods=['POST'])
