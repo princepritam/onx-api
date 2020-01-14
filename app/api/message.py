@@ -13,8 +13,9 @@ def create_message():
     try:
         create_params = request.get_json()
         create_params['created_at'] = datetime.datetime.now().isoformat()
+        Message.from_document(create_params).full_clean(exclude=None)
         message = Message()
-        message.save()
+        message.save(force_insert=True)
         Message.objects.raw({'_id': message._id}).update({'$set': create_params})
         socketio.emit('chat-' + create_params['session_id'], create_params)
         create_params['sessage_id'] = str(message._id)
